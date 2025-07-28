@@ -5,6 +5,12 @@
     <LangVersion>latest</LangVersion>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <EnableTrimAnalyzer>True</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <EnableTrimAnalyzer>True</EnableTrimAnalyzer>
+  </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />

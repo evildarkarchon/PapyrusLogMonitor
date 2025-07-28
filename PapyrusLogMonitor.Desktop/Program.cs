@@ -2,8 +2,9 @@
 
 using Avalonia;
 using Avalonia.ReactiveUI;
+using PapyrusLogMonitor.Avalonia;
 
-namespace PapyrusLogMonitor.Desktop;
+namespace PapyrusLogMonitor;
 
 class Program
 {

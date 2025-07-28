@@ -1,11 +1,10 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-
 using PapyrusLogMonitor.ViewModels;
 using PapyrusLogMonitor.Views;
 
-namespace PapyrusLogMonitor;
+namespace PapyrusLogMonitor.Avalonia;
 
 public partial class App : Application
 {

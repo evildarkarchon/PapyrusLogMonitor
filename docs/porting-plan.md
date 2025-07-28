@@ -2,29 +2,29 @@ Read-only Reference code available in `Code to Port/`
 # Multi-Phase Implementation Plan: Papyrus Monitor C# Avalonia App
 
 ## Phase 1: Project Structure & Core Library Setup
-- [ ] Create solution structure:
-  - [ ] `PapyrusMonitor.Core` - Class library for business logic
-  - [ ] `PapyrusMonitor.Avalonia` - Avalonia MVVM UI application
-  - [ ] `PapyrusMonitor.Core.Tests` - Unit tests for core library
-- [ ] Set up NuGet packages:
-  - [ ] Core: `System.Reactive`, `System.IO.Abstractions`
-  - [ ] Avalonia: `Avalonia`, `Avalonia.ReactiveUI`, `ReactiveUI.Fody`
-- [ ] Configure `.editorconfig` and code style rules
+- [x] Create solution structure:
+  - [x] `PapyrusMonitor.Core` - Class library for business logic
+  - [x] `PapyrusMonitor.Avalonia` - Avalonia MVVM UI application
+  - [x] `PapyrusMonitor.Core.Tests` - Unit tests for core library
+- [x] Set up NuGet packages:
+  - [x] Core: `System.Reactive`, `System.IO.Abstractions`
+  - [x] Avalonia: `Avalonia`, `Avalonia.ReactiveUI`, `ReactiveUI.Fody`
+- [x] Configure `.editorconfig` and code style rules
 
 ## Phase 2: Core Business Logic Library
-- [ ] Create domain models:
-  - [ ] `PapyrusStats` record with properties (Dumps, Stacks, Warnings, Errors, Ratio, Timestamp)
-  - [ ] `LogEntry` record for individual log line parsing
-  - [ ] `MonitoringConfiguration` class for settings
-- [ ] Implement log parsing engine:
-  - [ ] `ILogParser` interface with line parsing methods
-  - [ ] `PapyrusLogParser` implementation with regex patterns
-  - [ ] Encoding detection support (similar to chardet functionality)
-- [ ] Create monitoring service:
-  - [ ] `IPapyrusMonitorService` interface
-  - [ ] `PapyrusMonitorService` with Observable pattern using System.Reactive
-  - [ ] File watcher implementation for real-time monitoring
-  - [ ] Throttling/debouncing to prevent file lock conflicts
+- [x] Create domain models:
+  - [x] `PapyrusStats` record with properties (Dumps, Stacks, Warnings, Errors, Ratio, Timestamp)
+  - [x] `LogEntry` record for individual log line parsing
+  - [x] `MonitoringConfiguration` class for settings
+- [x] Implement log parsing engine:
+  - [x] `ILogParser` interface with line parsing methods
+  - [x] `PapyrusLogParser` implementation with regex patterns
+  - [x] Encoding detection support (similar to chardet functionality)
+- [x] Create monitoring service:
+  - [x] `IPapyrusMonitorService` interface
+  - [x] `PapyrusMonitorService` with Observable pattern using System.Reactive
+  - [x] File watcher implementation for real-time monitoring
+  - [x] Throttling/debouncing to prevent file lock conflicts
 
 ## Phase 3: Real-time Monitoring Infrastructure
 - [ ] Implement file monitoring:

@@ -120,3 +120,12 @@ dotnet clean
 - Test stats parsing logic independently
 - Verify observable emissions with `TestScheduler`
 - UI testing with Avalonia.Headless
+- **Chosen Testing Framework**: Xunit for unit testing
+
+## Project Entry Point
+
+- The entry-point project is `PapyrusMonitor.Desktop`
+
+## Code Organization Principles
+
+- Interfaces should be put in separate files from their implementations, for organizational purposes, preferably in a dedicated folder

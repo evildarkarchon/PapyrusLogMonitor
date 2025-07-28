@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace PapyrusLogMonitor.Views;
+namespace PapyrusMonitor.Avalonia.Views;
 
 public partial class MainView : UserControl
 {

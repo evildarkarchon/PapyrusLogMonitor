@@ -1,4 +1,4 @@
-﻿namespace PapyrusLogMonitor.Avalonia.ViewModels;
+﻿namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {

@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
 
-namespace PapyrusLogMonitor.Avalonia.ViewModels;
+namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class ViewModelBase : ReactiveObject
 {

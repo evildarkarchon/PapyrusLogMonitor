@@ -1,10 +1,9 @@
-﻿using System;
-
+using System;
 using Avalonia;
 using Avalonia.ReactiveUI;
-using PapyrusLogMonitor.Avalonia;
+using PapyrusMonitor.Avalonia;
 
-namespace PapyrusLogMonitor;
+namespace PapyrusMonitor.Desktop;
 
 class Program
 {

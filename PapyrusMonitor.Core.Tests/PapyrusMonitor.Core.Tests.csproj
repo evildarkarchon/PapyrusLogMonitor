@@ -26,4 +26,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PapyrusMonitor.Core\PapyrusMonitor.Core.csproj" />
+  </ItemGroup>
+
 </Project>

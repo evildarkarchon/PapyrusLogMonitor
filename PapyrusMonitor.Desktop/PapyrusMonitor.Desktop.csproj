@@ -8,7 +8,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyName>PapyrusMonitor</AssemblyName>
+    <AssemblyName>PapyrusLogMonitor</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

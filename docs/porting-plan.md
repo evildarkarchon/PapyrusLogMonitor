@@ -27,18 +27,18 @@ Read-only Reference code available in `Code to Port/`
   - [x] Throttling/debouncing to prevent file lock conflicts
 
 ## Phase 3: Real-time Monitoring Infrastructure
-- [ ] Implement file monitoring:
-  - [ ] `FileSystemWatcher` wrapper with proper error handling
-  - [ ] Tail-like functionality for reading new log entries
-  - [ ] Handle file rotation and recreation scenarios
-- [ ] Add performance optimizations:
-  - [ ] Buffered reading for large files
-  - [ ] Incremental parsing (only parse new content)
-  - [ ] Background thread processing with `Task.Run`
-- [ ] Create statistics aggregator:
-  - [ ] Running totals with thread-safe operations
-  - [ ] Observable stream of `PapyrusStats` updates
-  - [ ] Configurable update intervals
+- [x] Implement file monitoring:
+  - [x] `FileSystemWatcher` wrapper with proper error handling
+  - [x] Tail-like functionality for reading new log entries
+  - [x] Handle file rotation and recreation scenarios
+- [x] Add performance optimizations:
+  - [x] Buffered reading for large files
+  - [x] Incremental parsing (only parse new content)
+  - [x] Background thread processing with `Task.Run`
+- [x] Create statistics aggregator:
+  - [x] Running totals with thread-safe operations
+  - [x] Observable stream of `PapyrusStats` updates
+  - [x] Configurable update intervals
 
 ## Phase 4: MVVM ViewModels with ReactiveUI
 - [ ] Create base ViewModel infrastructure:
@@ -63,8 +63,7 @@ Read-only Reference code available in `Code to Port/`
   - [ ] Start/Stop toggle button with state indication
   - [ ] Timestamp display with auto-refresh
 - [ ] Add visual enhancements:
-  - [ ] Progress indicators during file processing
-  - [ ] Color-coded severity indicators
+  - [ ] Progress indicators during file processing (is this necessary? This is a tail log reader.)
   - [ ] Smooth animations for value changes
 
 ## Phase 6: Advanced Features
@@ -72,10 +71,6 @@ Read-only Reference code available in `Code to Port/`
   - [ ] Settings view for log path configuration
   - [ ] JSON-based settings persistence
   - [ ] Hot-reload of configuration changes
-- [ ] Add notification system:
-  - [ ] Threshold alerts (e.g., error count > X)
-  - [ ] System tray integration
-  - [ ] Toast notifications for critical events
 - [ ] Create data export functionality:
   - [ ] Export statistics to CSV/JSON
   - [ ] Session history tracking

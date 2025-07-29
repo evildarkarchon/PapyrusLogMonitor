@@ -4,6 +4,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="PapyrusMonitor.Avalonia.Tests/PapyrusMonitor.Avalonia.Tests.csproj" />
   <Project Path="PapyrusMonitor.Avalonia/PapyrusMonitor.Avalonia.csproj" />
   <Project Path="PapyrusMonitor.Core.Tests/PapyrusMonitor.Core.Tests.csproj" />
   <Project Path="PapyrusMonitor.Core/PapyrusMonitor.Core.csproj" />

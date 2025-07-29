@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>PapyrusMonitor.Core</RootNamespace>
+	<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

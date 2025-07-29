@@ -41,17 +41,17 @@ Read-only Reference code available in `Code to Port/`
   - [x] Configurable update intervals
 
 ## Phase 4: MVVM ViewModels with ReactiveUI
-- [ ] Create base ViewModel infrastructure:
-  - [ ] `ViewModelBase` with ReactiveObject inheritance
-  - [ ] `IActivatableViewModel` implementation
-- [ ] Implement main ViewModels:
-  - [ ] `MainWindowViewModel` - Application shell
-  - [ ] `PapyrusMonitorViewModel` - Main monitoring logic
-  - [ ] `StatisticsViewModel` - Real-time stats display
-- [ ] Add ReactiveUI features:
-  - [ ] Commands with `ReactiveCommand.CreateFromTask`
-  - [ ] Observable properties with `WhenAnyValue`
-  - [ ] Validation using ReactiveUI validation helpers
+- [x] Create base ViewModel infrastructure:
+  - [x] `ViewModelBase` with ReactiveObject inheritance
+  - [x] `IActivatableViewModel` implementation
+- [x] Implement main ViewModels:
+  - [x] `MainWindowViewModel` - Application shell
+  - [x] `PapyrusMonitorViewModel` - Main monitoring logic
+  - [x] `StatisticsViewModel` - Real-time stats display
+- [x] Add ReactiveUI features:
+  - [x] Commands with `ReactiveCommand.CreateFromTask`
+  - [x] Observable properties with `WhenAnyValue`
+  - [x] Validation using ReactiveUI validation helpers
 
 ## Phase 5: Avalonia UI Implementation
 - [ ] Create main window:

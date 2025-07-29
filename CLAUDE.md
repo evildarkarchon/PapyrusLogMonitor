@@ -129,3 +129,13 @@ dotnet clean
 ## Code Organization Principles
 
 - Interfaces should be put in separate files from their implementations, for organizational purposes, preferably in a dedicated folder
+
+## Build Configuration Considerations
+
+- Code should be able to be compiled with trimming enabled
+
+## Test Project Organization
+
+- Tests for PapyrusMonitor.Core must go in PapyrusMonitor.Core.Tests
+- Tests for PapyrusMonitor.Avalonia must go in PapyrusMonitor.Avalonia.Tests
+- Strict separation is important because the PapyrusMonitor.Core project, and its tests, will be utilized elsewhere

@@ -173,7 +173,7 @@
         <!-- Progress Indicator -->
         <ProgressBar Grid.Row="5"
                      IsIndeterminate="True"
-                     IsVisible="{Binding IsProcessing}"
+                     IsVisible="{Binding IsProcessing, FallbackValue=False}"
                      Height="4"
                      VerticalAlignment="Top"
                      Margin="0,10,0,0"

@@ -61,7 +61,11 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
 
     public bool IsProcessing
     {
-        get => _isProcessing;
+        get 
+        {
+            System.Diagnostics.Debug.WriteLine($"IsProcessing requested: {_isProcessing}");
+            return _isProcessing;
+        }
         private set => this.RaiseAndSetIfChanged(ref _isProcessing, value);
     }
 

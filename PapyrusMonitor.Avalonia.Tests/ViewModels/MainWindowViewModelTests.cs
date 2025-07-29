@@ -89,7 +89,7 @@ public class MainWindowViewModelTests
             mockMonitorService.Setup(x => x.IsMonitoring).Returns(false);
             
             var viewModel = new MainWindowViewModel();
-            viewModel.PapyrusMonitor = new PapyrusMonitorViewModel(mockMonitorService.Object);
+            viewModel.PapyrusMonitor = new PapyrusMonitorViewModel();
             viewModel.Activator.Activate();
 
             // Act
@@ -115,13 +115,8 @@ public class MainWindowViewModelTests
                 propertyChanged = true;
         };
 
-        var mockMonitorService = new Mock<IPapyrusMonitorService>();
-        mockMonitorService.Setup(x => x.StatsUpdated).Returns(Observable.Never<PapyrusStats>());
-        mockMonitorService.Setup(x => x.Errors).Returns(Observable.Never<string>());
-        mockMonitorService.Setup(x => x.IsMonitoring).Returns(false);
-        
         // Act
-        viewModel.PapyrusMonitor = new PapyrusMonitorViewModel(mockMonitorService.Object);
+        viewModel.PapyrusMonitor = new PapyrusMonitorViewModel();
 
         // Assert
         propertyChanged.Should().BeTrue();

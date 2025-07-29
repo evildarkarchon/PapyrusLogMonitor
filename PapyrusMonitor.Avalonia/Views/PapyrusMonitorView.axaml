@@ -150,7 +150,7 @@
             <!-- Start/Stop Button -->
             <Button Command="{Binding ToggleMonitoringCommand}"
                     IsEnabled="{Binding !IsProcessing}"
-                    Width="150"
+                    Width="175"
                     Height="40">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="{Binding MonitoringButtonIcon, FallbackValue='▶️'}" FontSize="16" Foreground="White" />
@@ -159,7 +159,7 @@
             </Button>
 
             <!-- Settings Button (placeholder for future) -->
-            <Button Width="100"
+            <Button Width="125"
                     Height="40"
                     IsEnabled="False"
                     ToolTip.Tip="Settings (Coming Soon)">

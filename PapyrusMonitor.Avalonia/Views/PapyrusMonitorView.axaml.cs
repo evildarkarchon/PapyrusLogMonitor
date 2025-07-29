@@ -10,11 +10,5 @@ public partial class PapyrusMonitorView : ReactiveUserControl<PapyrusMonitorView
     public PapyrusMonitorView()
     {
         InitializeComponent();
-        
-        // Temporarily set DataContext directly for debugging
-        if (DataContext == null)
-        {
-            DataContext = new PapyrusMonitorViewModel();
-        }
     }
 }

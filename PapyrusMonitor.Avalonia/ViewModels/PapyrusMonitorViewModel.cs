@@ -15,7 +15,7 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
 {
-    private readonly IPapyrusMonitorService? _monitorService;
+    private readonly IPapyrusMonitorService _monitorService;
     private readonly ObservableAsPropertyHelper<bool> _isMonitoring;
     private readonly ObservableAsPropertyHelper<string> _statusText;
     private readonly ObservableAsPropertyHelper<DateTime> _lastUpdateTime;
@@ -119,11 +119,12 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     public ReactiveCommand<Unit, Unit> ForceUpdateCommand { get; }
     public ReactiveCommand<string, Unit> UpdateLogPathCommand { get; }
 
-    public PapyrusMonitorViewModel()
+    public PapyrusMonitorViewModel(IPapyrusMonitorService monitorService, MonitoringConfiguration configuration)
     {
-        // For now, create service manually - in production this would come from DI
-        // Set a default log path for testing
-        LogFilePath = @"C:\Users\<username>\Documents\My Games\Fallout4\Logs\Script\Papyrus.0.log";
+        _monitorService = monitorService ?? throw new ArgumentNullException(nameof(monitorService));
+        
+        // Set initial log path from configuration
+        LogFilePath = configuration?.LogFilePath;
 
         // Create observable for monitoring state
         var isMonitoringObservable = this.WhenAnyValue(x => x.IsMonitoringInternal)
@@ -273,26 +274,23 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
 
     protected override void HandleActivation(CompositeDisposable disposables)
     {
-        // Subscribe to stats updates if service is available
-        if (_monitorService != null)
-        {
-            _monitorService.StatsUpdated
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(stats =>
-                {
-                    Statistics = stats;
-                })
-                .DisposeWith(disposables);
+        // Subscribe to stats updates from service
+        _monitorService.StatsUpdated
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(stats =>
+            {
+                Statistics = stats;
+            })
+            .DisposeWith(disposables);
 
-            // Subscribe to errors
-            _monitorService.Errors
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(error =>
-                {
-                    LastError = error;
-                })
-                .DisposeWith(disposables);
-        }
+        // Subscribe to errors
+        _monitorService.Errors
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(error =>
+            {
+                LastError = error;
+            })
+            .DisposeWith(disposables);
 
         // Clear errors after 5 seconds
         this.WhenAnyValue(x => x.LastError)
@@ -316,30 +314,8 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             this.RaisePropertyChanged(nameof(MonitoringButtonIcon));
             _cancellationTokenSource = new CancellationTokenSource();
             
-            // For now, just simulate monitoring with dummy data
-            await Task.Run(async () =>
-            {
-                var random = new Random();
-                while (!_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    await Task.Delay(1000, _cancellationTokenSource.Token);
-                    
-                    // Simulate stats updates
-                    var dumps = Statistics.Dumps + random.Next(0, 2);
-                    var stacks = Statistics.Stacks + random.Next(0, 3);
-                    var warnings = Statistics.Warnings + (random.Next(0, 100) > 95 ? 1 : 0);
-                    var errors = Statistics.Errors + (random.Next(0, 100) > 98 ? 1 : 0);
-                    var ratio = stacks > 0 ? (double)dumps / stacks : 0.0;
-                    
-                    Statistics = new PapyrusStats(
-                        DateTime.Now,
-                        dumps,
-                        stacks,
-                        warnings,
-                        errors,
-                        ratio);
-                }
-            }, _cancellationTokenSource.Token);
+            // Start the real monitoring service
+            await _monitorService.StartAsync(_cancellationTokenSource.Token);
         }
         catch (OperationCanceledException)
         {
@@ -363,7 +339,10 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             LastError = null;
             IsProcessing = true;
             _cancellationTokenSource?.Cancel();
-            await Task.Delay(100); // Small delay to ensure cancellation is processed
+            
+            // Stop the real monitoring service
+            await _monitorService.StopAsync(_cancellationTokenSource?.Token ?? CancellationToken.None);
+            
             IsMonitoringInternal = false;
             _currentButtonText = "Start Monitoring";
             _currentButtonIcon = "▶️";
@@ -400,8 +379,8 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         try
         {
             LastError = null;
-            // Simulate force update
-            await Task.Delay(100);
+            // Force update using the real monitoring service
+            await _monitorService.ForceUpdateAsync();
         }
         catch (Exception ex)
         {
@@ -416,7 +395,15 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         {
             LastError = null;
             LogFilePath = path;
-            await Task.CompletedTask;
+            
+            // Update the service configuration with new path
+            var newConfig = new MonitoringConfiguration
+            {
+                LogFilePath = path,
+                UpdateIntervalMs = _monitorService.Configuration.UpdateIntervalMs,
+                UseFileWatcher = _monitorService.Configuration.UseFileWatcher
+            };
+            await _monitorService.UpdateConfigurationAsync(newConfig);
         }
         catch (Exception ex)
         {

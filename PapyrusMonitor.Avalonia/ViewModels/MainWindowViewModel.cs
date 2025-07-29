@@ -1,3 +1,4 @@
+using System;
 using System.Reactive;
 using System.Reactive.Disposables;
 using ReactiveUI;
@@ -6,7 +7,6 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private PapyrusMonitorViewModel? _papyrusMonitor;
     private string _title = "Papyrus Log Monitor";
 
     public string Title
@@ -15,19 +15,13 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _title, value);
     }
 
-    public PapyrusMonitorViewModel? PapyrusMonitor
-    {
-        get => _papyrusMonitor;
-        set => this.RaiseAndSetIfChanged(ref _papyrusMonitor, value);
-    }
-
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
     public PapyrusMonitorViewModel PapyrusMonitorViewModel { get; }
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(PapyrusMonitorViewModel papyrusMonitorViewModel)
     {
-        PapyrusMonitorViewModel = new PapyrusMonitorViewModel();
+        PapyrusMonitorViewModel = papyrusMonitorViewModel ?? throw new ArgumentNullException(nameof(papyrusMonitorViewModel));
         
         ExitCommand = ReactiveCommand.Create(() =>
         {
@@ -43,7 +37,7 @@ public class MainWindowViewModel : ViewModelBase
         // Ensure cleanup when deactivated
         Disposable.Create(() =>
         {
-            PapyrusMonitor?.Dispose();
+            PapyrusMonitorViewModel?.Dispose();
         }).DisposeWith(disposables);
     }
 }

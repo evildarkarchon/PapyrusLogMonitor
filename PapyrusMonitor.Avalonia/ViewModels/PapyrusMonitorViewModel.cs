@@ -21,6 +21,8 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     private readonly ObservableAsPropertyHelper<DateTime> _lastUpdateTime;
     private readonly ObservableAsPropertyHelper<string> _monitoringButtonText;
     private readonly ObservableAsPropertyHelper<string> _monitoringButtonIcon;
+    private string _currentButtonText = "Start Monitoring";
+    private string _currentButtonIcon = "▶️";
     private readonly ObservableAsPropertyHelper<bool> _hasStatusMessage;
     private readonly ObservableAsPropertyHelper<string> _statusMessage;
     private readonly ObservableAsPropertyHelper<IBrush> _statusMessageBackground;
@@ -63,7 +65,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _isProcessing, value);
     }
 
-    private bool IsMonitoringInternal
+    public bool IsMonitoringInternal
     {
         get => _isMonitoringInternal;
         set => this.RaiseAndSetIfChanged(ref _isMonitoringInternal, value);
@@ -78,8 +80,24 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     public bool IsMonitoring => _isMonitoring.Value;
     public string StatusText => _statusText.Value;
     public DateTime LastUpdateTime => _lastUpdateTime.Value;
-    public string MonitoringButtonText => _monitoringButtonText.Value;
-    public string MonitoringButtonIcon => _monitoringButtonIcon.Value;
+    public string MonitoringButtonText 
+    { 
+        get 
+        {
+            var result = _currentButtonText ?? "Start Monitoring";
+            System.Diagnostics.Debug.WriteLine($"MonitoringButtonText requested: '{result}'");
+            return result;
+        }
+    }
+    public string MonitoringButtonIcon 
+    { 
+        get 
+        {
+            var result = _currentButtonIcon ?? "▶️";
+            System.Diagnostics.Debug.WriteLine($"MonitoringButtonIcon requested: '{result}'");
+            return result;
+        }
+    }
     public bool HasStatusMessage => _hasStatusMessage.Value;
     public string StatusMessage => _statusMessage.Value;
     public IBrush StatusMessageBackground => _statusMessageBackground.Value;
@@ -104,28 +122,29 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         LogFilePath = @"C:\Users\<username>\Documents\My Games\Fallout4\Logs\Script\Papyrus.0.log";
 
         // Create observable for monitoring state
-        var isMonitoringObservable = this.WhenAnyValue(x => x.IsMonitoringInternal);
+        var isMonitoringObservable = this.WhenAnyValue(x => x.IsMonitoringInternal)
+            .StartWith(IsMonitoringInternal); // Ensure initial value is emitted
 
         _isMonitoring = isMonitoringObservable
-            .ToProperty(this, x => x.IsMonitoring);
+            .ToProperty(this, x => x.IsMonitoring, initialValue: false);
 
         _statusText = isMonitoringObservable
             .Select(monitoring => monitoring ? "Monitoring..." : "Idle")
-            .ToProperty(this, x => x.StatusText);
+            .ToProperty(this, x => x.StatusText, initialValue: "Idle");
 
         // Last update time
         _lastUpdateTime = this.WhenAnyValue(x => x.Statistics)
             .Select(stats => stats?.Timestamp ?? DateTime.Now)
-            .ToProperty(this, x => x.LastUpdateTime);
+            .ToProperty(this, x => x.LastUpdateTime, initialValue: DateTime.Now);
 
         // Monitoring button properties
         _monitoringButtonText = isMonitoringObservable
             .Select(monitoring => monitoring ? "Stop Monitoring" : "Start Monitoring")
-            .ToProperty(this, x => x.MonitoringButtonText);
+            .ToProperty(this, x => x.MonitoringButtonText, initialValue: "Start Monitoring");
 
         _monitoringButtonIcon = isMonitoringObservable
             .Select(monitoring => monitoring ? "⏹️" : "▶️")
-            .ToProperty(this, x => x.MonitoringButtonIcon);
+            .ToProperty(this, x => x.MonitoringButtonIcon, initialValue: "▶️");
 
         // Status message properties based on statistics
         var statsObservable = this.WhenAnyValue(x => x.Statistics);
@@ -134,7 +153,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
                 statsObservable,
                 this.WhenAnyValue(x => x.LastError),
                 (stats, error) => !string.IsNullOrEmpty(error) || stats.Errors > 0 || stats.Warnings > 0 || stats.Ratio > 0.5)
-            .ToProperty(this, x => x.HasStatusMessage);
+            .ToProperty(this, x => x.HasStatusMessage, initialValue: false);
 
         _statusMessage = Observable.CombineLatest(
                 statsObservable,
@@ -153,7 +172,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
                         return "Caution: Elevated dumps-to-stacks ratio.";
                     return "Papyrus log appears normal.";
                 })
-            .ToProperty(this, x => x.StatusMessage);
+            .ToProperty(this, x => x.StatusMessage, initialValue: "Papyrus log appears normal.");
 
         _statusMessageBackground = Observable.CombineLatest(
                 statsObservable,
@@ -166,7 +185,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
                         return new SolidColorBrush(Color.FromRgb(255, 244, 229)); // Light orange
                     return new SolidColorBrush(Color.FromRgb(230, 255, 230)); // Light green
                 })
-            .ToProperty(this, x => x.StatusMessageBackground);
+            .ToProperty(this, x => x.StatusMessageBackground, initialValue: new SolidColorBrush(Color.FromRgb(230, 255, 230)));
 
         _statusMessageFontWeight = Observable.CombineLatest(
                 statsObservable,
@@ -174,12 +193,12 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
                 (stats, error) => (!string.IsNullOrEmpty(error) || stats.Errors > 0 || stats.Warnings > 0) 
                     ? FontWeight.Bold 
                     : FontWeight.Normal)
-            .ToProperty(this, x => x.StatusMessageFontWeight);
+            .ToProperty(this, x => x.StatusMessageFontWeight, initialValue: FontWeight.Normal);
 
         // Ratio status properties
         _ratioStatus = statsObservable
             .Select(stats => stats.Ratio > 0.8 ? "❌" : stats.Ratio > 0.5 ? "⚠️" : "✓")
-            .ToProperty(this, x => x.RatioStatus);
+            .ToProperty(this, x => x.RatioStatus, initialValue: "✓");
 
         _ratioStatusColor = statsObservable
             .Select(stats => stats.Ratio > 0.8 
@@ -187,25 +206,34 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
                 : stats.Ratio > 0.5 
                     ? Brushes.Orange 
                     : Brushes.Green)
-            .ToProperty(this, x => x.RatioStatusColor);
+            .ToProperty(this, x => x.RatioStatusColor, initialValue: Brushes.Green);
 
         // Warnings status properties
         _warningsStatus = statsObservable
             .Select(stats => stats.Warnings > 0 ? "⚠️" : "✓")
-            .ToProperty(this, x => x.WarningsStatus);
+            .ToProperty(this, x => x.WarningsStatus, initialValue: "✓");
 
         _warningsStatusColor = statsObservable
             .Select(stats => stats.Warnings > 0 ? Brushes.Orange : Brushes.Green)
-            .ToProperty(this, x => x.WarningsStatusColor);
+            .ToProperty(this, x => x.WarningsStatusColor, initialValue: Brushes.Green);
 
         // Errors status properties
         _errorsStatus = statsObservable
             .Select(stats => stats.Errors > 0 ? "❌" : "✓")
-            .ToProperty(this, x => x.ErrorsStatus);
+            .ToProperty(this, x => x.ErrorsStatus, initialValue: "✓");
 
         _errorsStatusColor = statsObservable
             .Select(stats => stats.Errors > 0 ? Brushes.Red : Brushes.Green)
-            .ToProperty(this, x => x.ErrorsStatusColor);
+            .ToProperty(this, x => x.ErrorsStatusColor, initialValue: Brushes.Green);
+
+        // Button text and icon properties
+        _monitoringButtonText = isMonitoringObservable
+            .Select(monitoring => monitoring ? "Stop Monitoring" : "Start Monitoring")
+            .ToProperty(this, x => x.MonitoringButtonText, initialValue: "Start Monitoring");
+
+        _monitoringButtonIcon = isMonitoringObservable
+            .Select(monitoring => monitoring ? "⏹️" : "▶️")
+            .ToProperty(this, x => x.MonitoringButtonIcon, initialValue: "▶️");
 
         // Create commands
         var canStart = isMonitoringObservable.Select(x => !x);
@@ -278,6 +306,10 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             LastError = null;
             IsProcessing = true;
             IsMonitoringInternal = true;
+            _currentButtonText = "Stop Monitoring";
+            _currentButtonIcon = "⏹️";
+            this.RaisePropertyChanged(nameof(MonitoringButtonText));
+            this.RaisePropertyChanged(nameof(MonitoringButtonIcon));
             _cancellationTokenSource = new CancellationTokenSource();
             
             // For now, just simulate monitoring with dummy data
@@ -329,6 +361,10 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             _cancellationTokenSource?.Cancel();
             await Task.Delay(100); // Small delay to ensure cancellation is processed
             IsMonitoringInternal = false;
+            _currentButtonText = "Start Monitoring";
+            _currentButtonIcon = "▶️";
+            this.RaisePropertyChanged(nameof(MonitoringButtonText));
+            this.RaisePropertyChanged(nameof(MonitoringButtonIcon));
             _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = null;
         }

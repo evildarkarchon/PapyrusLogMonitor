@@ -23,8 +23,12 @@ public class MainWindowViewModel : ViewModelBase
 
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
+    public PapyrusMonitorViewModel PapyrusMonitorViewModel { get; }
+
     public MainWindowViewModel()
     {
+        PapyrusMonitorViewModel = new PapyrusMonitorViewModel();
+        
         ExitCommand = ReactiveCommand.Create(() =>
         {
             // Exit logic will be handled by the view
@@ -33,8 +37,8 @@ public class MainWindowViewModel : ViewModelBase
 
     protected override void HandleActivation(CompositeDisposable disposables)
     {
-        // TODO: Initialize Papyrus monitoring with proper dependency injection
-        // For now, PapyrusMonitor will be set externally via DI container
+        // Activate the child view model
+        PapyrusMonitorViewModel.Activator.Activate().DisposeWith(disposables);
         
         // Ensure cleanup when deactivated
         Disposable.Create(() =>

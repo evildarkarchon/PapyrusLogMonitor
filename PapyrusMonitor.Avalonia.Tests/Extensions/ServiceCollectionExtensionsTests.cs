@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using PapyrusMonitor.Avalonia.Extensions;
 using PapyrusMonitor.Avalonia.Services;
 using PapyrusMonitor.Avalonia.ViewModels;
@@ -25,8 +24,8 @@ public class ServiceCollectionExtensionsTests
 
         // Assert - Services
         serviceProvider.GetService<ISchedulerProvider>().Should().NotBeNull().And.BeOfType<AvaloniaSchedulerProvider>();
-        serviceProvider.GetService<Core.Interfaces.ILogger>().Should().NotBeNull().And.BeOfType<ConsoleLogger>();
-        
+        serviceProvider.GetService<ILogger>().Should().NotBeNull().And.BeOfType<ConsoleLogger>();
+
         // Assert - ViewModels
         serviceProvider.GetService<MainWindowViewModel>().Should().NotBeNull();
         serviceProvider.GetService<PapyrusMonitorViewModel>().Should().NotBeNull();
@@ -50,8 +49,8 @@ public class ServiceCollectionExtensionsTests
         var scheduler2 = serviceProvider.GetService<ISchedulerProvider>();
         scheduler1.Should().BeSameAs(scheduler2);
 
-        var logger1 = serviceProvider.GetService<Core.Interfaces.ILogger>();
-        var logger2 = serviceProvider.GetService<Core.Interfaces.ILogger>();
+        var logger1 = serviceProvider.GetService<ILogger>();
+        var logger2 = serviceProvider.GetService<ILogger>();
         logger1.Should().BeSameAs(logger2);
     }
 
@@ -61,7 +60,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        
+
         // Add required dependencies
         services.AddPapyrusMonitorCore(); // Add core services that ViewModels depend on
 
@@ -98,11 +97,12 @@ public class ServiceCollectionExtensionsTests
 
     [Theory]
     [InlineData(typeof(ISchedulerProvider), typeof(AvaloniaSchedulerProvider), ServiceLifetime.Singleton)]
-    [InlineData(typeof(Core.Interfaces.ILogger), typeof(ConsoleLogger), ServiceLifetime.Singleton)]
+    [InlineData(typeof(ILogger), typeof(ConsoleLogger), ServiceLifetime.Singleton)]
     [InlineData(typeof(MainWindowViewModel), typeof(MainWindowViewModel), ServiceLifetime.Transient)]
     [InlineData(typeof(PapyrusMonitorViewModel), typeof(PapyrusMonitorViewModel), ServiceLifetime.Transient)]
     [InlineData(typeof(SettingsViewModel), typeof(SettingsViewModel), ServiceLifetime.Transient)]
-    public void AddPapyrusMonitorViewModels_RegistersWithCorrectLifetime(Type serviceType, Type implementationType, ServiceLifetime expectedLifetime)
+    public void AddPapyrusMonitorViewModels_RegistersWithCorrectLifetime(Type serviceType, Type implementationType,
+        ServiceLifetime expectedLifetime)
     {
         // Arrange
         var services = new ServiceCollection();
@@ -123,6 +123,7 @@ public class ServiceCollectionExtensionsTests
             // For interfaces
             descriptor!.ImplementationType.Should().Be(implementationType);
         }
+
         descriptor.Lifetime.Should().Be(expectedLifetime);
     }
 
@@ -158,14 +159,14 @@ public class ServiceCollectionExtensionsTests
         // Act
         services.AddPapyrusMonitorViewModels();
         services.AddPapyrusMonitorViewModels(); // Call twice
-        
+
         // Assert - Currently allows duplicate registrations
         var schedulerDescriptors = services.Where(s => s.ServiceType == typeof(ISchedulerProvider)).ToList();
         schedulerDescriptors.Should().HaveCount(2);
-        
+
         var viewModelDescriptors = services.Where(s => s.ServiceType == typeof(MainWindowViewModel)).ToList();
         viewModelDescriptors.Should().HaveCount(2);
-        
+
         // Note: This is the current behavior. If you want to prevent duplicates,
         // the implementation would need to check if services are already registered
     }
@@ -179,8 +180,8 @@ public class ServiceCollectionExtensionsTests
 
         // Act - Register both Core and Avalonia services
         services.AddPapyrusMonitorCore()
-                .AddPapyrusMonitorViewModels();
-        
+            .AddPapyrusMonitorViewModels();
+
         var serviceProvider = services.BuildServiceProvider();
 
         // Assert - Can resolve a ViewModel with all its dependencies
@@ -190,7 +191,7 @@ public class ServiceCollectionExtensionsTests
         // Verify the ViewModel has access to core services through DI
         var monitorService = serviceProvider.GetService<IPapyrusMonitorService>();
         monitorService.Should().NotBeNull();
-        
+
         var scheduler = serviceProvider.GetService<ISchedulerProvider>();
         scheduler.Should().NotBeNull();
     }

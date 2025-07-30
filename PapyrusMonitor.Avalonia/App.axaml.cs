@@ -35,37 +35,37 @@ public class App : Application
         switch (ApplicationLifetime)
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
-                {
-                    var mainWindow = new MainWindow();
+            {
+                var mainWindow = new MainWindow();
 
-                    // Create MainWindowViewModel with storage provider
-                    var papyrusMonitorViewModel = ServiceProvider.GetRequiredService<PapyrusMonitorViewModel>();
-                    var settingsService = ServiceProvider.GetRequiredService<ISettingsService>();
-                    var exportService = ServiceProvider.GetRequiredService<IExportService>();
-                    var sessionHistoryService = ServiceProvider.GetRequiredService<ISessionHistoryService>();
-                    var trendAnalysisService = ServiceProvider.GetRequiredService<ITrendAnalysisService>();
-                    var schedulerProvider = ServiceProvider.GetRequiredService<ISchedulerProvider>();
-                    var logger = ServiceProvider.GetRequiredService<ILogger>();
+                // Create MainWindowViewModel with storage provider
+                var papyrusMonitorViewModel = ServiceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+                var settingsService = ServiceProvider.GetRequiredService<ISettingsService>();
+                var exportService = ServiceProvider.GetRequiredService<IExportService>();
+                var sessionHistoryService = ServiceProvider.GetRequiredService<ISessionHistoryService>();
+                var trendAnalysisService = ServiceProvider.GetRequiredService<ITrendAnalysisService>();
+                var schedulerProvider = ServiceProvider.GetRequiredService<ISchedulerProvider>();
+                var logger = ServiceProvider.GetRequiredService<ILogger>();
 
-                    var mainWindowViewModel = new MainWindowViewModel(
-                        papyrusMonitorViewModel,
-                        settingsService,
-                        exportService,
-                        sessionHistoryService,
-                        trendAnalysisService,
-                        schedulerProvider,
-                        logger,
-                        mainWindow.StorageProvider);
+                var mainWindowViewModel = new MainWindowViewModel(
+                    papyrusMonitorViewModel,
+                    settingsService,
+                    exportService,
+                    sessionHistoryService,
+                    trendAnalysisService,
+                    schedulerProvider,
+                    logger,
+                    mainWindow.StorageProvider);
 
-                    mainWindow.DataContext = mainWindowViewModel;
-                    desktop.MainWindow = mainWindow;
-                    break;
-                }
+                mainWindow.DataContext = mainWindowViewModel;
+                desktop.MainWindow = mainWindow;
+                break;
+            }
             case ISingleViewApplicationLifetime singleViewPlatform:
-                throw new NotSupportedException("Single view platform is not supported. This application requires a desktop environment.");
+                throw new NotSupportedException(
+                    "Single view platform is not supported. This application requires a desktop environment.");
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 }
-

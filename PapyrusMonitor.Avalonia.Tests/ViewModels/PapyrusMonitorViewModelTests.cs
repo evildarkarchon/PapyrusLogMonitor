@@ -1,3 +1,6 @@
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -6,21 +9,17 @@ using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
-using System.Reactive.Subjects;
-using ReactiveUI;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 
 namespace PapyrusMonitor.Avalonia.Tests.ViewModels;
 
 public class PapyrusMonitorViewModelTests2 : IDisposable
 {
+    private readonly Subject<string> _errorSubject;
     private readonly Mock<IPapyrusMonitorService> _mockMonitorService;
-    private readonly Mock<ISettingsService> _mockSettingsService;
     private readonly Mock<ISessionHistoryService> _mockSessionHistoryService;
+    private readonly Mock<ISettingsService> _mockSettingsService;
     private readonly ServiceProvider _serviceProvider;
     private readonly Subject<PapyrusStats> _statsSubject;
-    private readonly Subject<string> _errorSubject;
 
     public PapyrusMonitorViewModelTests2()
     {
@@ -87,14 +86,14 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
     {
         var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
         ActivateViewModel(viewModel);
-        
+
         var newStats = new PapyrusStats(
-            Timestamp: DateTime.Now,
-            Dumps: 10,
-            Stacks: 20,
-            Warnings: 5,
-            Errors: 2,
-            Ratio: 0.5
+            DateTime.Now,
+            10,
+            20,
+            5,
+            2,
+            0.5
         );
 
         _statsSubject.OnNext(newStats);
@@ -111,7 +110,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
 
         // Test with zero values - should show all green
         _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 0, 0.3));
-        
+
         viewModel.RatioStatus.Should().Be("✓");
         viewModel.RatioStatusColor.ToString().Should().Contain("Green");
         viewModel.WarningsStatus.Should().Be("✓");
@@ -121,13 +120,13 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
 
         // Any warnings > 0 should show warning
         _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 1, 0, 0.3));
-        
+
         viewModel.WarningsStatus.Should().Be("⚠️");
         viewModel.WarningsStatusColor.ToString().Should().Contain("Orange");
 
         // Any errors > 0 should show error
         _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 1, 0.3));
-        
+
         viewModel.ErrorsStatus.Should().Be("❌");
         viewModel.ErrorsStatusColor.ToString().Should().Contain("Red");
     }
@@ -142,7 +141,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
         viewModel.IsMonitoring.Should().BeTrue();
         viewModel.MonitoringButtonText.Should().Be("Stop Monitoring");
         viewModel.MonitoringButtonIcon.Should().Be("⏹️");
-        
+
         _mockMonitorService.Verify(x => x.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -150,7 +149,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
     public void ToggleMonitoringCommand_Should_Stop_Monitoring_When_Running()
     {
         var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
-        
+
         // Start monitoring first
         viewModel.ToggleMonitoringCommand.Execute().Subscribe();
         viewModel.IsMonitoring.Should().BeTrue();
@@ -161,7 +160,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
         viewModel.IsMonitoring.Should().BeFalse();
         viewModel.MonitoringButtonText.Should().Be("Start Monitoring");
         viewModel.MonitoringButtonIcon.Should().Be("▶️");
-        
+
         _mockMonitorService.Verify(x => x.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -213,7 +212,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
 
         // Ratio between 0.5 and 0.8 should show caution message
         _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 0, 0.6));
-        
+
         viewModel.HasStatusMessage.Should().BeTrue();
         viewModel.StatusMessage.Should().Be("Caution: Elevated dumps-to-stacks ratio.");
         viewModel.StatusMessageBackground.ToString().Should().Contain("#fffff4e5"); // Light orange (actual color)
@@ -224,7 +223,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
     {
         var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
         ActivateViewModel(viewModel);
-        
+
         _errorSubject.OnNext("Test error message");
 
         viewModel.LastError.Should().Be("Test error message");
@@ -246,7 +245,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
     public void Should_Call_SessionHistoryService_When_Stopping_Monitoring()
     {
         var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
-        
+
         // Start and stop monitoring
         viewModel.ToggleMonitoringCommand.Execute().Subscribe();
         viewModel.ToggleMonitoringCommand.Execute().Subscribe();
@@ -259,7 +258,7 @@ public class PapyrusMonitorViewModelTests2 : IDisposable
     {
         var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
         ActivateViewModel(viewModel);
-        
+
         var stats = new PapyrusStats(DateTime.Now, 10, 20, 5, 2, 0.5);
 
         _statsSubject.OnNext(stats);

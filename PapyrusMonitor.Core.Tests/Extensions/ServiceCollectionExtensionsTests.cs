@@ -1,7 +1,6 @@
 using System.IO.Abstractions;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using PapyrusMonitor.Core.Analytics;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Export;
@@ -26,19 +25,19 @@ public class ServiceCollectionExtensionsTests
 
         // Assert - File system abstraction
         serviceProvider.GetService<IFileSystem>().Should().NotBeNull().And.BeOfType<FileSystem>();
-        
+
         // Assert - Core services
         serviceProvider.GetService<ILogParser>().Should().NotBeNull().And.BeOfType<PapyrusLogParser>();
         serviceProvider.GetService<IFileWatcher>().Should().NotBeNull().And.BeOfType<FileWatcher>();
         serviceProvider.GetService<IFileTailReader>().Should().NotBeNull().And.BeOfType<FileTailReader>();
         serviceProvider.GetService<IPapyrusMonitorService>().Should().NotBeNull().And.BeOfType<PapyrusMonitorService>();
-        
+
         // Assert - Phase 6 services
         serviceProvider.GetService<ISettingsService>().Should().NotBeNull().And.BeOfType<JsonSettingsService>();
         serviceProvider.GetService<IExportService>().Should().NotBeNull().And.BeOfType<ExportService>();
         serviceProvider.GetService<ISessionHistoryService>().Should().NotBeNull().And.BeOfType<SessionHistoryService>();
         serviceProvider.GetService<ITrendAnalysisService>().Should().NotBeNull().And.BeOfType<TrendAnalysisService>();
-        
+
         // Assert - Configuration
         serviceProvider.GetService<MonitoringConfiguration>().Should().NotBeNull();
     }
@@ -76,9 +75,7 @@ public class ServiceCollectionExtensionsTests
         services.AddLogging();
         var customConfig = new MonitoringConfiguration
         {
-            LogFilePath = "/custom/path/to/log.txt",
-            UpdateIntervalMs = 5000,
-            UseFileWatcher = false
+            LogFilePath = "/custom/path/to/log.txt", UpdateIntervalMs = 5000, UseFileWatcher = false
         };
 
         // Act
@@ -136,7 +133,7 @@ public class ServiceCollectionExtensionsTests
         config.UseFileWatcher.Should().BeTrue();
         config.LogFilePath.Should().NotBeNullOrEmpty();
         // Path should contain expected game folder structure
-        config.LogFilePath.Should().Match(path => 
+        config.LogFilePath.Should().Match(path =>
             path.Contains("Fallout4") || path.Contains("Skyrim"));
         config.LogFilePath.Should().EndWith("Papyrus.0.log");
     }
@@ -168,7 +165,7 @@ public class ServiceCollectionExtensionsTests
         // Assert - Should be able to create the monitor service with all dependencies
         var action = () => serviceProvider.GetService<IPapyrusMonitorService>();
         action.Should().NotThrow();
-        
+
         var monitorService = serviceProvider.GetService<IPapyrusMonitorService>();
         monitorService.Should().NotBeNull();
     }
@@ -182,11 +179,11 @@ public class ServiceCollectionExtensionsTests
         // Act
         services.AddPapyrusMonitorCore();
         services.AddPapyrusMonitorCore(); // Call twice
-        
+
         // Assert - Currently allows duplicate registrations
         var serviceDescriptors = services.Where(s => s.ServiceType == typeof(IPapyrusMonitorService)).ToList();
         serviceDescriptors.Should().HaveCount(2);
-        
+
         // Note: This is the current behavior. If you want to prevent duplicates,
         // the implementation would need to check if services are already registered
     }

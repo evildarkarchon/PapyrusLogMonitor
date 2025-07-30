@@ -1,11 +1,8 @@
-using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
-using System.Reactive.Linq;
 using System.Text;
 using FluentAssertions;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
-using Xunit;
 
 namespace PapyrusMonitor.Core.Tests.Integration;
 
@@ -47,21 +44,21 @@ public class FileMonitoringIntegrationTests
         // Arrange
         CreateInitialLogFile();
         var parser = new PapyrusLogParser(_fileSystem);
-        
+
         // Act - Parse initial content
         var initialStats = await parser.ParseFileAsync(_logFilePath);
-        
+
         // Add more content
         AppendToLogFile("\n[07/29/2025 - 02:00:00PM] Dumping Stacks\n");
         AppendToLogFile("[07/29/2025 - 02:00:01PM] error: New error\n");
         AppendToLogFile("[07/29/2025 - 02:00:02PM] warning: New warning\n");
-        
+
         var updatedStats = await parser.ParseFileAsync(_logFilePath);
 
         // Assert
         initialStats.Should().NotBeNull();
         updatedStats.Should().NotBeNull();
-        
+
         updatedStats.Dumps.Should().BeGreaterThan(initialStats.Dumps);
         updatedStats.Errors.Should().BeGreaterThan(initialStats.Errors);
         updatedStats.Warnings.Should().BeGreaterThan(initialStats.Warnings);
@@ -149,10 +146,8 @@ public class FileMonitoringIntegrationTests
         var parser = new PapyrusLogParser(_fileSystem);
         var logLines = new[]
         {
-            "[07/29/2025 - 01:00:00PM] Dumping Stacks",
-            "[07/29/2025 - 01:00:01PM] warning: Property not found",
-            "[07/29/2025 - 01:00:02PM] error: Cannot call GetValue() on a None object",
-            "[Invalid line format]",
+            "[07/29/2025 - 01:00:00PM] Dumping Stacks", "[07/29/2025 - 01:00:01PM] warning: Property not found",
+            "[07/29/2025 - 01:00:02PM] error: Cannot call GetValue() on a None object", "[Invalid line format]",
             "Random text without timestamp"
         };
 
@@ -160,19 +155,25 @@ public class FileMonitoringIntegrationTests
         foreach (var line in logLines)
         {
             var entry = parser.ParseLine(line);
-            
+
             if (line.StartsWith("[") && line.Contains("]"))
             {
                 entry.Should().NotBeNull();
                 entry!.Timestamp.Should().NotBe(default);
                 entry.Content.Should().NotBeNullOrEmpty();
-                
+
                 if (line.Contains("Dumping stacks"))
+                {
                     entry.Type.Should().Be(LogEntryType.DumpingStacks);
+                }
                 else if (line.Contains("warning:"))
+                {
                     entry.Type.Should().Be(LogEntryType.Warning);
+                }
                 else if (line.Contains("error:"))
+                {
                     entry.Type.Should().Be(LogEntryType.Error);
+                }
             }
             else
             {
@@ -224,14 +225,14 @@ public class FileMonitoringIntegrationTests
     {
         var sb = new StringBuilder();
         sb.AppendLine("[07/29/2025 - 01:00:00PM] Papyrus log opened (PC-64)");
-        
+
         var random = new Random(42);
-        for (int i = 0; i < entryCount; i++)
+        for (var i = 0; i < entryCount; i++)
         {
             var second = (i % 60).ToString("00");
-            var minute = ((i / 60) % 60).ToString("00");
-            var hour = (1 + (i / 3600)).ToString("00");
-            
+            var minute = (i / 60 % 60).ToString("00");
+            var hour = (1 + i / 3600).ToString("00");
+
             var entryType = random.Next(4);
             switch (entryType)
             {
@@ -249,7 +250,7 @@ public class FileMonitoringIntegrationTests
                     break;
             }
         }
-        
+
         _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_logFilePath)!);
         _fileSystem.File.WriteAllText(_logFilePath, sb.ToString(), Encoding.UTF8);
     }

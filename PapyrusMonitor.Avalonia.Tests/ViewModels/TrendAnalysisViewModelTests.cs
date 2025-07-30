@@ -1,4 +1,3 @@
-using System.Reactive;
 using System.Reactive.Linq;
 using FluentAssertions;
 using Microsoft.Reactive.Testing;
@@ -62,7 +61,7 @@ public class TrendAnalysisViewModelTests
         viewModel.RefreshCommand.CanExecute
             .FirstAsync()
             .Wait();
-        
+
         viewModel.RefreshCommand.CanExecute
             .FirstAsync()
             .Subscribe(canExecute => canExecute.Should().BeTrue());
@@ -75,12 +74,12 @@ public class TrendAnalysisViewModelTests
         var viewModel = CreateViewModel();
         var statistics = new List<PapyrusStats>
         {
-            new(DateTime.Now, 10, 5, 2, 1, 0.1),
-            new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
+            new(DateTime.Now, 10, 5, 2, 1, 0.1), new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
         };
 
         _mockSessionHistoryService.Setup(x => x.GetSessionStatistics()).Returns(statistics);
-        _mockTrendAnalysisService.Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
+        _mockTrendAnalysisService
+            .Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
             .Returns(async () =>
             {
                 await Task.Delay(100);
@@ -96,7 +95,7 @@ public class TrendAnalysisViewModelTests
 
         // Assert - Should be false while loading
         canExecuteStates.Should().Contain(false);
-        
+
         await refreshTask;
     }
 
@@ -116,7 +115,7 @@ public class TrendAnalysisViewModelTests
         viewModel.HasData.Should().BeFalse();
         viewModel.CurrentAnalysis.Should().BeNull();
         _mockTrendAnalysisService.Verify(x => x.AnalyzeTrendsAsync(
-            It.IsAny<IReadOnlyList<PapyrusStats>>(), 
+            It.IsAny<IReadOnlyList<PapyrusStats>>(),
             It.IsAny<int>()), Times.Never);
     }
 
@@ -178,12 +177,12 @@ public class TrendAnalysisViewModelTests
         var viewModel = CreateViewModel();
         var statistics = new List<PapyrusStats>
         {
-            new(DateTime.Now, 10, 5, 2, 1, 0.1),
-            new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
+            new(DateTime.Now, 10, 5, 2, 1, 0.1), new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
         };
 
         _mockSessionHistoryService.Setup(x => x.GetSessionStatistics()).Returns(statistics);
-        _mockTrendAnalysisService.Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
+        _mockTrendAnalysisService
+            .Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
             .ThrowsAsync(new Exception("Analysis failed"));
 
         // Act
@@ -206,15 +205,15 @@ public class TrendAnalysisViewModelTests
     {
         // Arrange
         var viewModel = CreateViewModel();
-        
+
         var statistics = new List<PapyrusStats>
         {
-            new(DateTime.Now, 10, 5, 2, 1, 0.1),
-            new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
+            new(DateTime.Now, 10, 5, 2, 1, 0.1), new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
         };
 
         _mockSessionHistoryService.Setup(x => x.GetSessionStatistics()).Returns(statistics);
-        _mockTrendAnalysisService.Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
+        _mockTrendAnalysisService
+            .Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
             .ReturnsAsync(CreateTestAnalysisResult(DateTime.Now));
 
         // First refresh to set HasData = true
@@ -226,12 +225,13 @@ public class TrendAnalysisViewModelTests
 
         // Act - Change moving average period
         viewModel.MovingAveragePeriod = 10;
-        
+
         // Wait for throttle period and command execution
         await Task.Delay(700);
 
         // Assert
-        _mockTrendAnalysisService.Verify(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), 10), Times.Once);
+        _mockTrendAnalysisService.Verify(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), 10),
+            Times.Once);
     }
 
     [Fact]
@@ -263,14 +263,14 @@ public class TrendAnalysisViewModelTests
 
         var statistics = new List<PapyrusStats>
         {
-            new(DateTime.Now, 10, 5, 2, 1, 0.1),
-            new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
+            new(DateTime.Now, 10, 5, 2, 1, 0.1), new(DateTime.Now.AddMinutes(1), 20, 10, 4, 2, 0.2)
         };
 
         _mockSessionHistoryService.Setup(x => x.GetSessionStatistics()).Returns(statistics);
-        
+
         var callCount = 0;
-        _mockTrendAnalysisService.Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
+        _mockTrendAnalysisService
+            .Setup(x => x.AnalyzeTrendsAsync(It.IsAny<IReadOnlyList<PapyrusStats>>(), It.IsAny<int>()))
             .ReturnsAsync(() =>
             {
                 callCount++;
@@ -291,7 +291,7 @@ public class TrendAnalysisViewModelTests
         viewModel.MovingAveragePeriod = 9;
         await Task.Delay(100);
         viewModel.MovingAveragePeriod = 10;
-        
+
         // Wait for throttle period to expire
         await Task.Delay(700);
 
@@ -307,8 +307,7 @@ public class TrendAnalysisViewModelTests
         var baseTime = DateTime.Now;
         var statistics = new List<PapyrusStats>
         {
-            new(baseTime, 10, 5, 2, 1, 0.1),
-            new(baseTime.AddMinutes(1), 20, 10, 4, 2, 0.2)
+            new(baseTime, 10, 5, 2, 1, 0.1), new(baseTime.AddMinutes(1), 20, 10, 4, 2, 0.2)
         };
 
         var analysisResult = CreateTestAnalysisResult(baseTime);
@@ -349,8 +348,7 @@ public class TrendAnalysisViewModelTests
     {
         var dataPoints = new List<TrendDataPoint>
         {
-            new() { Timestamp = baseTime, Value = 10 },
-            new() { Timestamp = baseTime.AddMinutes(1), Value = 20 }
+            new() { Timestamp = baseTime, Value = 10 }, new() { Timestamp = baseTime.AddMinutes(1), Value = 20 }
         };
 
         var trendData = new TrendData

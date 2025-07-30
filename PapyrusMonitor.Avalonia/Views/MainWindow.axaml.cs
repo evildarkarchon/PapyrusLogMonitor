@@ -1,6 +1,5 @@
 ﻿using Avalonia.ReactiveUI;
 using PapyrusMonitor.Avalonia.ViewModels;
-using ReactiveUI;
 
 namespace PapyrusMonitor.Avalonia.Views;
 

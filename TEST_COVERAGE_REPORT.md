@@ -8,9 +8,9 @@ This report provides a comprehensive overview of test coverage across the Papyru
 
 ## Test Statistics
 
-- **Total Tests**: 160 (as of 2025-07-29)
-  - Core Tests: 121
-  - Avalonia Tests: 39
+- **Total Tests**: 178 (as of 2025-07-29)
+  - Core Tests: 128
+  - Avalonia Tests: 50
 - **Test Frameworks**: xUnit, FluentAssertions, Moq
 - **Mocking**: System.IO.Abstractions for file system operations
 
@@ -97,7 +97,7 @@ This report provides a comprehensive overview of test coverage across the Papyru
 3. ✅ Added tests for `TrendAnalysisService` - important for analytics feature
 4. ✅ Refactored `SettingsViewModel` - improved testability and worked around ReactiveUI negation operator limitation
 
-### Medium Priority 🟡
+### Medium Priority 🟡 - ✅ ALL COMPLETED
 1. Add tests for `TrendCalculator` and `StatisticsAggregator`
 2. Add integration tests for file monitoring scenarios
 3. Add tests for value converters

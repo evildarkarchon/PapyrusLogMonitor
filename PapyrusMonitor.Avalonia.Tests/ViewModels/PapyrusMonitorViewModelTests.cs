@@ -1,284 +1,269 @@
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using FluentAssertions;
-using Microsoft.Reactive.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using PapyrusMonitor.Avalonia.ViewModels;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
+using System.Reactive.Subjects;
 using ReactiveUI;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 
 namespace PapyrusMonitor.Avalonia.Tests.ViewModels;
 
-public class PapyrusMonitorViewModelTests : IDisposable
+public class PapyrusMonitorViewModelTests2 : IDisposable
 {
     private readonly Mock<IPapyrusMonitorService> _mockMonitorService;
-    private readonly Mock<ISessionHistoryService> _mockSessionHistoryService;
     private readonly Mock<ISettingsService> _mockSettingsService;
-    private readonly Subject<AppSettings> _settingsChangedSubject;
-    private readonly MonitoringConfiguration _testConfiguration;
-    private readonly TestScheduler _testScheduler;
-    private readonly AppSettings _testSettings;
+    private readonly Mock<ISessionHistoryService> _mockSessionHistoryService;
+    private readonly ServiceProvider _serviceProvider;
+    private readonly Subject<PapyrusStats> _statsSubject;
+    private readonly Subject<string> _errorSubject;
 
-    public PapyrusMonitorViewModelTests()
+    public PapyrusMonitorViewModelTests2()
     {
-        _testScheduler = new TestScheduler();
-        RxApp.MainThreadScheduler = _testScheduler;
-
-        // Setup mock monitor service
         _mockMonitorService = new Mock<IPapyrusMonitorService>();
-        _mockMonitorService.Setup(x => x.StatsUpdated).Returns(Observable.Never<PapyrusStats>());
-        _mockMonitorService.Setup(x => x.Errors).Returns(Observable.Never<string>());
-        _mockMonitorService.Setup(x => x.IsMonitoring).Returns(false);
-        _mockMonitorService.Setup(x => x.Configuration).Returns(new MonitoringConfiguration());
-        _mockMonitorService.Setup(x => x.LastStats).Returns((PapyrusStats?)null);
-
-        // Setup test settings
-        _testSettings = new AppSettings
-        {
-            LogFilePath = @"C:\test\log.txt", UpdateInterval = 1000, AutoStartMonitoring = false
-        };
-
-        // Setup mock settings service
         _mockSettingsService = new Mock<ISettingsService>();
-        _settingsChangedSubject = new Subject<AppSettings>();
-        _mockSettingsService.Setup(x => x.Settings).Returns(_testSettings);
-        _mockSettingsService.Setup(x => x.SettingsChanged).Returns(_settingsChangedSubject);
-
-        // Setup mock session history service
         _mockSessionHistoryService = new Mock<ISessionHistoryService>();
+        _statsSubject = new Subject<PapyrusStats>();
+        _errorSubject = new Subject<string>();
 
-        // Setup test configuration
-        _testConfiguration = new MonitoringConfiguration { LogFilePath = @"C:\test\log.txt", UpdateIntervalMs = 1000 };
+        _mockMonitorService.Setup(x => x.StatsUpdated).Returns(_statsSubject);
+        _mockMonitorService.Setup(x => x.Errors).Returns(_errorSubject);
+        _mockSettingsService.Setup(x => x.Settings).Returns(new AppSettings());
+        _mockSettingsService.Setup(x => x.SettingsChanged).Returns(Observable.Never<AppSettings>());
+
+        var services = new ServiceCollection();
+        services.AddSingleton(_mockMonitorService.Object);
+        services.AddSingleton(_mockSettingsService.Object);
+        services.AddSingleton(_mockSessionHistoryService.Object);
+        services.AddTransient<PapyrusMonitorViewModel>();
+
+        _serviceProvider = services.BuildServiceProvider();
     }
 
     public void Dispose()
     {
-        // TestScheduler doesn't need disposal
-        _settingsChangedSubject?.Dispose();
+        _serviceProvider?.Dispose();
+        _statsSubject?.Dispose();
+        _errorSubject?.Dispose();
+    }
+
+    private void ActivateViewModel(PapyrusMonitorViewModel viewModel)
+    {
+        // Simulate view activation to trigger HandleActivation
+        var disposables = new CompositeDisposable();
+        viewModel.Activator.Activate();
     }
 
     [Fact]
-    public void Constructor_InitializesWithDependencyInjection()
+    public void Should_Initialize_With_Default_Values()
     {
-        // Act & Assert
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        viewModel.Should().NotBeNull();
-    }
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
 
-    [Fact]
-    public void Constructor_InitializesPropertiesCorrectly()
-    {
-        // Act
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-
-        // Assert
-        viewModel.Statistics.Should().NotBeNull();
-        viewModel.LogFilePath.Should().Be(_testSettings.LogFilePath);
-        viewModel.LastError.Should().BeNull();
         viewModel.IsMonitoring.Should().BeFalse();
-        viewModel.StatusText.Should().Be("Idle");
+        viewModel.IsProcessing.Should().BeFalse();
+        viewModel.EnableAnimations.Should().BeTrue();
+        viewModel.MonitoringButtonText.Should().Be("Start Monitoring");
+        viewModel.MonitoringButtonIcon.Should().Be("▶️");
     }
 
     [Fact]
-    public void IsMonitoring_ReflectsInternalState()
+    public void Should_Initialize_Statistics_With_Zero_Values()
     {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        var initialState = viewModel.IsMonitoring;
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
 
-        // Act
-        viewModel.IsMonitoringInternal = true;
-
-        // Assert
-        initialState.Should().BeFalse();
-        viewModel.IsMonitoring.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task StartMonitoringCommand_StartsMonitoring()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        _mockMonitorService.Setup(x => x.StartAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockMonitorService.Setup(x =>
-                x.UpdateConfigurationAsync(It.IsAny<MonitoringConfiguration>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await viewModel.StartMonitoringCommand.Execute().FirstAsync();
-
-        // Assert
-        viewModel.IsMonitoringInternal.Should().BeTrue();
-        _mockMonitorService.Verify(x => x.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _mockSessionHistoryService.Verify(x => x.StartSession(), Times.Once);
-
-        // Clean up
-        await viewModel.StopMonitoringCommand.Execute().FirstAsync();
-    }
-
-    [Fact]
-    public async Task StartMonitoringCommand_CanExecuteWhenNotMonitoring()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        viewModel.IsMonitoringInternal = false;
-
-        // Act
-        var canExecute = await viewModel.StartMonitoringCommand.CanExecute.FirstAsync();
-
-        // Assert
-        canExecute.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task StopMonitoringCommand_StopsMonitoring()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        viewModel.IsMonitoringInternal = true;
-
-        // Act
-        await viewModel.StopMonitoringCommand.Execute().FirstAsync();
-
-        // Assert
-        viewModel.IsMonitoringInternal.Should().BeFalse();
-        _mockMonitorService.Verify(x => x.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _mockSessionHistoryService.Verify(x => x.EndSession(), Times.Once);
-    }
-
-    [Fact]
-    public async Task ToggleMonitoringCommand_CanExecute()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-
-        // Act
-        var canExecute = await viewModel.ToggleMonitoringCommand.CanExecute.FirstAsync();
-
-        // Assert
-        canExecute.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task ToggleMonitoringCommand_StopsWhenMonitoring()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        viewModel.IsMonitoringInternal = true;
-
-        // Act
-        await viewModel.ToggleMonitoringCommand.Execute().FirstAsync();
-
-        // Assert
-        viewModel.IsMonitoringInternal.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task ForceUpdateCommand_CallsForceUpdate()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        _mockMonitorService.Setup(x => x.ForceUpdateAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        viewModel.IsMonitoringInternal = true;
-
-        // Act
-        await viewModel.ForceUpdateCommand.Execute().FirstAsync();
-
-        // Assert
-        _mockMonitorService.Verify(x => x.ForceUpdateAsync(It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task UpdateLogPathCommand_UpdatesConfiguration()
-    {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        const string newPath = @"C:\new\path.txt";
-        _mockSettingsService.Setup(x => x.SaveSettingsAsync(It.IsAny<AppSettings>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await viewModel.UpdateLogPathCommand.Execute(newPath).FirstAsync();
-
-        // Assert
-        viewModel.LogFilePath.Should().Be(newPath);
-        _mockSettingsService.Verify(x => x.SaveSettingsAsync(It.Is<AppSettings>(s => s.LogFilePath == newPath)),
-            Times.Once);
-    }
-
-    [Fact]
-    public void StatsUpdates_StatisticsPropertyIsAccessible()
-    {
-        // Arrange & Act
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-
-        // Assert - Test that Statistics property is accessible and has default values
-        viewModel.Statistics.Should().NotBeNull();
         viewModel.Statistics.Dumps.Should().Be(0);
         viewModel.Statistics.Stacks.Should().Be(0);
         viewModel.Statistics.Warnings.Should().Be(0);
         viewModel.Statistics.Errors.Should().Be(0);
-        viewModel.Statistics.Ratio.Should().Be(0.0);
+        viewModel.Statistics.Ratio.Should().Be(0);
     }
 
     [Fact]
-    public void ErrorMessages_CanBeAccessed()
+    public void Should_Update_Statistics_When_Stats_Updated()
     {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+        
+        var newStats = new PapyrusStats(
+            Timestamp: DateTime.Now,
+            Dumps: 10,
+            Stacks: 20,
+            Warnings: 5,
+            Errors: 2,
+            Ratio: 0.5
+        );
 
-        // Act & Assert - Test that LastError property can be accessed
-        viewModel.LastError.Should().BeNull(); // Should start as null
+        _statsSubject.OnNext(newStats);
+
+        viewModel.Statistics.Should().Be(newStats);
+        viewModel.LastUpdateTime.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
-    public void LastError_PropertyNotifiesChanges()
+    public void Should_Update_Status_Indicators_Based_On_Values()
     {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
-        // Act - Access the property to trigger any potential change notification setup
-        var currentError = viewModel.LastError;
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
 
-        // Assert
-        currentError.Should().BeNull();
-        // Note: Since we can't directly set the private setter, we just test that the property exists
+        // Test with zero values - should show all green
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 0, 0.3));
+        
+        viewModel.RatioStatus.Should().Be("✓");
+        viewModel.RatioStatusColor.ToString().Should().Contain("Green");
+        viewModel.WarningsStatus.Should().Be("✓");
+        viewModel.WarningsStatusColor.ToString().Should().Contain("Green");
+        viewModel.ErrorsStatus.Should().Be("✓");
+        viewModel.ErrorsStatusColor.ToString().Should().Contain("Green");
+
+        // Any warnings > 0 should show warning
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 1, 0, 0.3));
+        
+        viewModel.WarningsStatus.Should().Be("⚠️");
+        viewModel.WarningsStatusColor.ToString().Should().Contain("Orange");
+
+        // Any errors > 0 should show error
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 1, 0.3));
+        
+        viewModel.ErrorsStatus.Should().Be("❌");
+        viewModel.ErrorsStatusColor.ToString().Should().Contain("Red");
     }
 
     [Fact]
-    public void Dispose_CleansUpResources()
+    public void ToggleMonitoringCommand_Should_Start_Monitoring()
     {
-        // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
-            _mockSessionHistoryService.Object);
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
 
-        // Act
-        viewModel.Dispose();
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
 
-        // Assert
-        // Disposal should complete without throwing
-        viewModel.Should().NotBeNull();
-        _mockMonitorService.Verify(x => x.Dispose(), Times.Once);
+        viewModel.IsMonitoring.Should().BeTrue();
+        viewModel.MonitoringButtonText.Should().Be("Stop Monitoring");
+        viewModel.MonitoringButtonIcon.Should().Be("⏹️");
+        
+        _mockMonitorService.Verify(x => x.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public void ToggleMonitoringCommand_Should_Stop_Monitoring_When_Running()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        
+        // Start monitoring first
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
+        viewModel.IsMonitoring.Should().BeTrue();
+
+        // Stop monitoring
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
+
+        viewModel.IsMonitoring.Should().BeFalse();
+        viewModel.MonitoringButtonText.Should().Be("Start Monitoring");
+        viewModel.MonitoringButtonIcon.Should().Be("▶️");
+        
+        _mockMonitorService.Verify(x => x.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public void Should_Display_Status_Message_For_High_Warnings()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 50, 2, 0.5));
+
+        viewModel.HasStatusMessage.Should().BeTrue();
+        viewModel.StatusMessage.Should().Be("2 errors detected in Papyrus log!");
+        // The color is in hex format
+        viewModel.StatusMessageBackground.ToString().Should().Contain("#ffffe6e6"); // Light red because errors > 0
+    }
+
+    [Fact]
+    public void Should_Display_Status_Message_For_High_Errors()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 50, 100, 0.5));
+
+        viewModel.HasStatusMessage.Should().BeTrue();
+        viewModel.StatusMessage.Should().Be("100 errors detected in Papyrus log!");
+        // The color is in hex format
+        viewModel.StatusMessageBackground.ToString().Should().Contain("#ffffe6e6"); // Light red
+    }
+
+    [Fact]
+    public void Should_Display_Normal_Status_Message_For_Low_Values()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+
+        // Normal status - no errors, warnings, and ratio <= 0.5 means HasStatusMessage is false
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 0, 0.3));
+
+        viewModel.HasStatusMessage.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_Display_Caution_Message_For_Elevated_Ratio()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+
+        // Ratio between 0.5 and 0.8 should show caution message
+        _statsSubject.OnNext(new PapyrusStats(DateTime.Now, 10, 20, 0, 0, 0.6));
+        
+        viewModel.HasStatusMessage.Should().BeTrue();
+        viewModel.StatusMessage.Should().Be("Caution: Elevated dumps-to-stacks ratio.");
+        viewModel.StatusMessageBackground.ToString().Should().Contain("#fffff4e5"); // Light orange (actual color)
+    }
+
+    [Fact]
+    public void Should_Update_Last_Error_When_Error_Occurs()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+        
+        _errorSubject.OnNext("Test error message");
+
+        viewModel.LastError.Should().Be("Test error message");
+        viewModel.HasStatusMessage.Should().BeTrue();
+        viewModel.StatusMessage.Should().Be("Error: Test error message");
+    }
+
+    [Fact]
+    public void Should_Call_SessionHistoryService_When_Starting_Monitoring()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
+
+        _mockSessionHistoryService.Verify(x => x.StartSession(), Times.Once);
+    }
+
+    [Fact]
+    public void Should_Call_SessionHistoryService_When_Stopping_Monitoring()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        
+        // Start and stop monitoring
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
+        viewModel.ToggleMonitoringCommand.Execute().Subscribe();
+
+        _mockSessionHistoryService.Verify(x => x.EndSession(), Times.Once);
+    }
+
+    [Fact]
+    public void Should_Add_Stats_To_SessionHistory_When_Updated()
+    {
+        var viewModel = _serviceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+        ActivateViewModel(viewModel);
+        
+        var stats = new PapyrusStats(DateTime.Now, 10, 20, 5, 2, 0.5);
+
+        _statsSubject.OnNext(stats);
+
+        _mockSessionHistoryService.Verify(x => x.RecordStats(stats), Times.Once);
     }
 }

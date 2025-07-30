@@ -14,6 +14,11 @@ public class FileTailReaderTests : IDisposable
         _tailReader = new FileTailReader(_fileSystem);
     }
 
+    public void Dispose()
+    {
+        _tailReader?.Dispose();
+    }
+
     [Fact]
     public async Task InitializeAsync_ValidFile_SetsProperties()
     {
@@ -39,7 +44,7 @@ public class FileTailReaderTests : IDisposable
         _fileSystem.AddFile(filePath, new MockFileData(content));
 
         // Act
-        await _tailReader.InitializeAsync(filePath, startFromEnd: true);
+        await _tailReader.InitializeAsync(filePath, true);
 
         // Assert
         Assert.Equal(filePath, _tailReader.FilePath);
@@ -120,7 +125,7 @@ public class FileTailReaderTests : IDisposable
         const string initialContent = "Line 1\n";
         _fileSystem.AddFile(filePath, new MockFileData(initialContent));
 
-        await _tailReader.InitializeAsync(filePath, startFromEnd: true);
+        await _tailReader.InitializeAsync(filePath, true);
 
         // Add more content
         _fileSystem.File.AppendAllText(filePath, "Line 2\n");
@@ -140,7 +145,7 @@ public class FileTailReaderTests : IDisposable
         const string content = "Line 1\n";
         _fileSystem.AddFile(filePath, new MockFileData(content));
 
-        await _tailReader.InitializeAsync(filePath, startFromEnd: true);
+        await _tailReader.InitializeAsync(filePath, true);
 
         // Act
         var hasNewContent = await _tailReader.HasNewContentAsync();
@@ -157,7 +162,7 @@ public class FileTailReaderTests : IDisposable
         const string content = "Line 1\nLine 2\n";
         _fileSystem.AddFile(filePath, new MockFileData(content));
 
-        await _tailReader.InitializeAsync(filePath, startFromEnd: true);
+        await _tailReader.InitializeAsync(filePath, true);
         var initialPosition = _tailReader.CurrentPosition;
 
         // Act
@@ -187,10 +192,5 @@ public class FileTailReaderTests : IDisposable
         // Assert
         Assert.True(positionBeforeRecreation > 0);
         Assert.Equal(0, _tailReader.CurrentPosition);
-    }
-
-    public void Dispose()
-    {
-        _tailReader?.Dispose();
     }
 }

@@ -1,7 +1,5 @@
-using System;
-using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
+using System.Reactive.Subjects;
 using FluentAssertions;
 using Microsoft.Reactive.Testing;
 using Moq;
@@ -9,44 +7,65 @@ using PapyrusMonitor.Avalonia.ViewModels;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
+using PapyrusMonitor.Core.Services;
 using ReactiveUI;
-using ReactiveUI.Testing;
-using Xunit;
 
 namespace PapyrusMonitor.Avalonia.Tests.ViewModels;
 
 public class PapyrusMonitorViewModelTests : IDisposable
 {
-    private readonly TestScheduler _testScheduler;
     private readonly Mock<IPapyrusMonitorService> _mockMonitorService;
+    private readonly Mock<ISessionHistoryService> _mockSessionHistoryService;
+    private readonly Mock<ISettingsService> _mockSettingsService;
+    private readonly Subject<AppSettings> _settingsChangedSubject;
     private readonly MonitoringConfiguration _testConfiguration;
+    private readonly TestScheduler _testScheduler;
+    private readonly AppSettings _testSettings;
 
     public PapyrusMonitorViewModelTests()
     {
         _testScheduler = new TestScheduler();
         RxApp.MainThreadScheduler = _testScheduler;
-        
-        // Setup mock service
+
+        // Setup mock monitor service
         _mockMonitorService = new Mock<IPapyrusMonitorService>();
         _mockMonitorService.Setup(x => x.StatsUpdated).Returns(Observable.Never<PapyrusStats>());
         _mockMonitorService.Setup(x => x.Errors).Returns(Observable.Never<string>());
         _mockMonitorService.Setup(x => x.IsMonitoring).Returns(false);
         _mockMonitorService.Setup(x => x.Configuration).Returns(new MonitoringConfiguration());
         _mockMonitorService.Setup(x => x.LastStats).Returns((PapyrusStats?)null);
-        
-        // Setup test configuration
-        _testConfiguration = new MonitoringConfiguration
+
+        // Setup test settings
+        _testSettings = new AppSettings
         {
-            LogFilePath = @"C:\test\log.txt",
-            UpdateIntervalMs = 1000
+            LogFilePath = @"C:\test\log.txt", UpdateInterval = 1000, AutoStartMonitoring = false
         };
+
+        // Setup mock settings service
+        _mockSettingsService = new Mock<ISettingsService>();
+        _settingsChangedSubject = new Subject<AppSettings>();
+        _mockSettingsService.Setup(x => x.Settings).Returns(_testSettings);
+        _mockSettingsService.Setup(x => x.SettingsChanged).Returns(_settingsChangedSubject);
+
+        // Setup mock session history service
+        _mockSessionHistoryService = new Mock<ISessionHistoryService>();
+
+        // Setup test configuration
+        _testConfiguration = new MonitoringConfiguration { LogFilePath = @"C:\test\log.txt", UpdateIntervalMs = 1000 };
+    }
+
+    public void Dispose()
+    {
+        // TestScheduler doesn't need disposal
+        _settingsChangedSubject?.Dispose();
     }
 
     [Fact]
     public void Constructor_InitializesWithDependencyInjection()
     {
         // Act & Assert
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
         viewModel.Should().NotBeNull();
     }
 
@@ -54,11 +73,12 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public void Constructor_InitializesPropertiesCorrectly()
     {
         // Act
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
 
         // Assert
         viewModel.Statistics.Should().NotBeNull();
-        viewModel.LogFilePath.Should().Be(_testConfiguration.LogFilePath);
+        viewModel.LogFilePath.Should().Be(_testSettings.LogFilePath);
         viewModel.LastError.Should().BeNull();
         viewModel.IsMonitoring.Should().BeFalse();
         viewModel.StatusText.Should().Be("Idle");
@@ -68,12 +88,13 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public void IsMonitoring_ReflectsInternalState()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
         var initialState = viewModel.IsMonitoring;
-        
+
         // Act
         viewModel.IsMonitoringInternal = true;
-        
+
         // Assert
         initialState.Should().BeFalse();
         viewModel.IsMonitoring.Should().BeTrue();
@@ -83,29 +104,32 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public async Task StartMonitoringCommand_StartsMonitoring()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
-        _mockMonitorService.Setup(x => x.StartAsync(It.IsAny<System.Threading.CancellationToken>()))
-                          .Returns(Task.CompletedTask);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
+        _mockMonitorService.Setup(x => x.StartAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _mockMonitorService.Setup(x =>
+                x.UpdateConfigurationAsync(It.IsAny<MonitoringConfiguration>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
-        // Act - Test that the command can execute without throwing
-        var canExecute = await viewModel.StartMonitoringCommand.CanExecute.FirstAsync();
-        
-        // Clean up by ensuring we're not monitoring
-        if (viewModel.IsMonitoringInternal)
-        {
-            await viewModel.StopMonitoringCommand.Execute().FirstAsync();
-        }
+        // Act
+        await viewModel.StartMonitoringCommand.Execute().FirstAsync();
 
         // Assert
-        canExecute.Should().BeTrue();
-        _mockMonitorService.Verify(x => x.StartAsync(It.IsAny<System.Threading.CancellationToken>()), Times.Never);
+        viewModel.IsMonitoringInternal.Should().BeTrue();
+        _mockMonitorService.Verify(x => x.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockSessionHistoryService.Verify(x => x.StartSession(), Times.Once);
+
+        // Clean up
+        await viewModel.StopMonitoringCommand.Execute().FirstAsync();
     }
 
     [Fact]
     public async Task StartMonitoringCommand_CanExecuteWhenNotMonitoring()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
         viewModel.IsMonitoringInternal = false;
 
         // Act
@@ -119,9 +143,10 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public async Task StopMonitoringCommand_StopsMonitoring()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
-        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<System.Threading.CancellationToken>()))
-                          .Returns(Task.CompletedTask);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
+        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         viewModel.IsMonitoringInternal = true;
 
         // Act
@@ -129,14 +154,16 @@ public class PapyrusMonitorViewModelTests : IDisposable
 
         // Assert
         viewModel.IsMonitoringInternal.Should().BeFalse();
-        _mockMonitorService.Verify(x => x.StopAsync(It.IsAny<System.Threading.CancellationToken>()), Times.Once);
+        _mockMonitorService.Verify(x => x.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockSessionHistoryService.Verify(x => x.EndSession(), Times.Once);
     }
 
     [Fact]
     public async Task ToggleMonitoringCommand_CanExecute()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
 
         // Act
         var canExecute = await viewModel.ToggleMonitoringCommand.CanExecute.FirstAsync();
@@ -149,9 +176,10 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public async Task ToggleMonitoringCommand_StopsWhenMonitoring()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
-        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<System.Threading.CancellationToken>()))
-                          .Returns(Task.CompletedTask);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
+        _mockMonitorService.Setup(x => x.StopAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         viewModel.IsMonitoringInternal = true;
 
         // Act
@@ -165,41 +193,45 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public async Task ForceUpdateCommand_CallsForceUpdate()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
-        _mockMonitorService.Setup(x => x.ForceUpdateAsync(It.IsAny<System.Threading.CancellationToken>()))
-                          .Returns(Task.CompletedTask);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
+        _mockMonitorService.Setup(x => x.ForceUpdateAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         viewModel.IsMonitoringInternal = true;
 
         // Act
         await viewModel.ForceUpdateCommand.Execute().FirstAsync();
 
         // Assert
-        _mockMonitorService.Verify(x => x.ForceUpdateAsync(It.IsAny<System.Threading.CancellationToken>()), Times.Once);
+        _mockMonitorService.Verify(x => x.ForceUpdateAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task UpdateLogPathCommand_UpdatesConfiguration()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
         const string newPath = @"C:\new\path.txt";
-        _mockMonitorService.Setup(x => x.UpdateConfigurationAsync(It.IsAny<MonitoringConfiguration>(), It.IsAny<System.Threading.CancellationToken>()))
-                          .Returns(Task.CompletedTask);
+        _mockSettingsService.Setup(x => x.SaveSettingsAsync(It.IsAny<AppSettings>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await viewModel.UpdateLogPathCommand.Execute(newPath).FirstAsync();
 
         // Assert
         viewModel.LogFilePath.Should().Be(newPath);
-        _mockMonitorService.Verify(x => x.UpdateConfigurationAsync(It.IsAny<MonitoringConfiguration>(), It.IsAny<System.Threading.CancellationToken>()), Times.Once);
+        _mockSettingsService.Verify(x => x.SaveSettingsAsync(It.Is<AppSettings>(s => s.LogFilePath == newPath)),
+            Times.Once);
     }
 
     [Fact]
     public void StatsUpdates_StatisticsPropertyIsAccessible()
     {
         // Arrange & Act
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
-        
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
+
         // Assert - Test that Statistics property is accessible and has default values
         viewModel.Statistics.Should().NotBeNull();
         viewModel.Statistics.Dumps.Should().Be(0);
@@ -213,7 +245,8 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public void ErrorMessages_CanBeAccessed()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
 
         // Act & Assert - Test that LastError property can be accessed
         viewModel.LastError.Should().BeNull(); // Should start as null
@@ -223,7 +256,8 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public void LastError_PropertyNotifiesChanges()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
         // Act - Access the property to trigger any potential change notification setup
         var currentError = viewModel.LastError;
 
@@ -236,7 +270,8 @@ public class PapyrusMonitorViewModelTests : IDisposable
     public void Dispose_CleansUpResources()
     {
         // Arrange
-        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _testConfiguration);
+        var viewModel = new PapyrusMonitorViewModel(_mockMonitorService.Object, _mockSettingsService.Object,
+            _mockSessionHistoryService.Object);
 
         // Act
         viewModel.Dispose();
@@ -245,10 +280,5 @@ public class PapyrusMonitorViewModelTests : IDisposable
         // Disposal should complete without throwing
         viewModel.Should().NotBeNull();
         _mockMonitorService.Verify(x => x.Dispose(), Times.Once);
-    }
-
-    public void Dispose()
-    {
-        // TestScheduler doesn't need disposal
     }
 }

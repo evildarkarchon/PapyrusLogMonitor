@@ -1,42 +1,52 @@
-using System;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.Styling;
 
 namespace PapyrusMonitor.Avalonia.Controls;
 
 /// <summary>
-/// A TextBlock that animates numeric value changes with smooth transitions
+///     A TextBlock that animates numeric value changes with smooth transitions
 /// </summary>
 public class AnimatedNumericTextBlock : TextBlock
 {
-    private double _currentValue;
-    private double _targetValue;
-    private readonly Animation _valueAnimation;
-
     public static readonly StyledProperty<double> ValueProperty =
         AvaloniaProperty.Register<AnimatedNumericTextBlock, double>(
-            nameof(Value), 
-            defaultValue: 0,
+            nameof(Value),
             coerce: (_, value) => value);
 
     public static readonly StyledProperty<string> FormatStringProperty =
         AvaloniaProperty.Register<AnimatedNumericTextBlock, string>(
-            nameof(FormatString), 
-            defaultValue: "F0");
+            nameof(FormatString),
+            "F0");
 
     public static readonly StyledProperty<TimeSpan> AnimationDurationProperty =
         AvaloniaProperty.Register<AnimatedNumericTextBlock, TimeSpan>(
-            nameof(AnimationDuration), 
-            defaultValue: TimeSpan.FromMilliseconds(400));
+            nameof(AnimationDuration),
+            TimeSpan.FromMilliseconds(400));
 
     public static readonly StyledProperty<bool> EnableAnimationsProperty =
         AvaloniaProperty.Register<AnimatedNumericTextBlock, bool>(
-            nameof(EnableAnimations), 
-            defaultValue: true);
+            nameof(EnableAnimations),
+            true);
+
+    private readonly Animation _valueAnimation;
+    private double _currentValue;
+    private double _targetValue;
+
+    static AnimatedNumericTextBlock()
+    {
+        ValueProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.OnValueChanged(e));
+        FormatStringProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.UpdateText());
+    }
+
+    public AnimatedNumericTextBlock()
+    {
+        _valueAnimation = new Animation
+        {
+            Duration = AnimationDuration, Easing = new CubicEaseOut(), FillMode = FillMode.Forward
+        };
+    }
 
     public double Value
     {
@@ -62,26 +72,10 @@ public class AnimatedNumericTextBlock : TextBlock
         set => SetValue(EnableAnimationsProperty, value);
     }
 
-    static AnimatedNumericTextBlock()
-    {
-        ValueProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.OnValueChanged(e));
-        FormatStringProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.UpdateText());
-    }
-
-    public AnimatedNumericTextBlock()
-    {
-        _valueAnimation = new Animation
-        {
-            Duration = AnimationDuration,
-            Easing = new CubicEaseOut(),
-            FillMode = FillMode.Forward
-        };
-    }
-
     private void OnValueChanged(AvaloniaPropertyChangedEventArgs e)
     {
         var newValue = (double)e.NewValue!;
-        
+
         if (!EnableAnimations || !IsVisible)
         {
             _currentValue = newValue;
@@ -126,7 +120,7 @@ public class AnimatedNumericTextBlock : TextBlock
                 break;
             }
 
-            await System.Threading.Tasks.Task.Delay(16); // ~60fps
+            await Task.Delay(16); // ~60fps
         }
     }
 

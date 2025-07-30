@@ -6,21 +6,20 @@ using PapyrusMonitor.Core.Interfaces;
 namespace PapyrusMonitor.Core.Services;
 
 /// <summary>
-/// Implementation of IFileWatcher that provides file system monitoring with error handling.
-/// 
-/// This class wraps FileSystemWatcher functionality and provides observable streams
-/// for file changes and errors, with proper cleanup and error recovery.
+///     Implementation of IFileWatcher that provides file system monitoring with error handling.
+///     This class wraps FileSystemWatcher functionality and provides observable streams
+///     for file changes and errors, with proper cleanup and error recovery.
 /// </summary>
 public class FileWatcher : IFileWatcher
 {
-    private readonly IFileSystem _fileSystem;
-    private readonly Subject<FileChangeEvent> _fileChangeSubject;
     private readonly Subject<string> _errorSubject;
-    private IFileSystemWatcher? _watcher;
+    private readonly Subject<FileChangeEvent> _fileChangeSubject;
+    private readonly IFileSystem _fileSystem;
     private bool _disposed;
+    private IFileSystemWatcher? _watcher;
 
     /// <summary>
-    /// Initializes a new instance of the FileWatcher class.
+    ///     Initializes a new instance of the FileWatcher class.
     /// </summary>
     /// <param name="fileSystem">File system abstraction for testability</param>
     public FileWatcher(IFileSystem fileSystem)
@@ -31,27 +30,36 @@ public class FileWatcher : IFileWatcher
     }
 
     /// <summary>
-    /// Gets an observable stream of file change events.
+    ///     Gets an observable stream of file change events.
     /// </summary>
-    public IObservable<FileChangeEvent> FileChanged => _fileChangeSubject.AsObservable();
+    public IObservable<FileChangeEvent> FileChanged
+    {
+        get => _fileChangeSubject.AsObservable();
+    }
 
     /// <summary>
-    /// Gets an observable stream of file watcher errors.
+    ///     Gets an observable stream of file watcher errors.
     /// </summary>
-    public IObservable<string> Errors => _errorSubject.AsObservable();
+    public IObservable<string> Errors
+    {
+        get => _errorSubject.AsObservable();
+    }
 
     /// <summary>
-    /// Gets a value indicating whether the file watcher is currently active.
+    ///     Gets a value indicating whether the file watcher is currently active.
     /// </summary>
-    public bool IsWatching => _watcher?.EnableRaisingEvents == true;
+    public bool IsWatching
+    {
+        get => _watcher?.EnableRaisingEvents == true;
+    }
 
     /// <summary>
-    /// Gets the path being watched.
+    ///     Gets the path being watched.
     /// </summary>
     public string? WatchPath { get; private set; }
 
     /// <summary>
-    /// Starts watching the specified file for changes.
+    ///     Starts watching the specified file for changes.
     /// </summary>
     /// <param name="filePath">The path to the file to watch</param>
     /// <param name="cancellationToken">Token to cancel the operation</param>
@@ -59,10 +67,14 @@ public class FileWatcher : IFileWatcher
     public Task StartWatchingAsync(string filePath, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath))
+        {
             throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        }
 
         if (_disposed)
+        {
             throw new ObjectDisposedException(nameof(FileWatcher));
+        }
 
         try
         {
@@ -104,7 +116,7 @@ public class FileWatcher : IFileWatcher
     }
 
     /// <summary>
-    /// Stops watching the file.
+    ///     Stops watching the file.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when watching stops</returns>
@@ -115,18 +127,20 @@ public class FileWatcher : IFileWatcher
     }
 
     /// <summary>
-    /// Disposes the file watcher and releases all resources.
+    ///     Disposes the file watcher and releases all resources.
     /// </summary>
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         StopWatching();
-        
+
         _fileChangeSubject?.Dispose();
         _errorSubject?.Dispose();
-        
+
         _disposed = true;
         GC.SuppressFinalize(this);
     }
@@ -181,7 +195,7 @@ public class FileWatcher : IFileWatcher
     {
         var message = e.GetException()?.Message ?? "Unknown file watcher error";
         _errorSubject.OnNext($"File watcher error: {message}");
-        
+
         // Try to restart the watcher after an error
         if (WatchPath != null)
         {

@@ -7,30 +7,27 @@ using PapyrusMonitor.Core.Models;
 namespace PapyrusMonitor.Core.Services;
 
 /// <summary>
-/// Implementation of IPapyrusMonitorService that provides real-time monitoring of Papyrus logs.
-/// 
-/// This service coordinates file watching, tail reading, and log parsing to provide
-/// observable streams of statistics updates and errors. It supports both file-watcher
-/// based monitoring and timer-based polling.
+///     Implementation of IPapyrusMonitorService that provides real-time monitoring of Papyrus logs.
+///     This service coordinates file watching, tail reading, and log parsing to provide
+///     observable streams of statistics updates and errors. It supports both file-watcher
+///     based monitoring and timer-based polling.
 /// </summary>
 public class PapyrusMonitorService : IPapyrusMonitorService
 {
-    private readonly ILogParser _logParser;
-    private readonly IFileWatcher _fileWatcher;
-    private readonly IFileTailReader _tailReader;
-    private readonly Subject<PapyrusStats> _statsSubject;
     private readonly Subject<string> _errorSubject;
-    
-    private MonitoringConfiguration _configuration;
-    private PapyrusStats? _lastStats;
-    private bool _isMonitoring;
+    private readonly IFileWatcher _fileWatcher;
+    private readonly object _lock = new();
+    private readonly ILogParser _logParser;
+    private readonly Subject<PapyrusStats> _statsSubject;
+    private readonly IFileTailReader _tailReader;
+
     private bool _disposed;
+    private bool _isMonitoring;
     private CancellationTokenSource? _monitoringCancellation;
     private Timer? _pollingTimer;
-    private readonly object _lock = new();
 
     /// <summary>
-    /// Initializes a new instance of the PapyrusMonitorService class.
+    ///     Initializes a new instance of the PapyrusMonitorService class.
     /// </summary>
     /// <param name="logParser">The log parser for processing log content</param>
     /// <param name="fileWatcher">The file watcher for detecting file changes</param>
@@ -45,8 +42,8 @@ public class PapyrusMonitorService : IPapyrusMonitorService
         _logParser = logParser ?? throw new ArgumentNullException(nameof(logParser));
         _fileWatcher = fileWatcher ?? throw new ArgumentNullException(nameof(fileWatcher));
         _tailReader = tailReader ?? throw new ArgumentNullException(nameof(tailReader));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        
+        Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
         _statsSubject = new Subject<PapyrusStats>();
         _errorSubject = new Subject<string>();
 
@@ -60,17 +57,23 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     }
 
     /// <summary>
-    /// Gets an observable stream of PapyrusStats updates.
+    ///     Gets an observable stream of PapyrusStats updates.
     /// </summary>
-    public IObservable<PapyrusStats> StatsUpdated => _statsSubject.AsObservable();
+    public IObservable<PapyrusStats> StatsUpdated
+    {
+        get => _statsSubject.AsObservable();
+    }
 
     /// <summary>
-    /// Gets an observable stream of error messages.
+    ///     Gets an observable stream of error messages.
     /// </summary>
-    public IObservable<string> Errors => _errorSubject.AsObservable();
+    public IObservable<string> Errors
+    {
+        get => _errorSubject.AsObservable();
+    }
 
     /// <summary>
-    /// Gets a value indicating whether the service is currently monitoring.
+    ///     Gets a value indicating whether the service is currently monitoring.
     /// </summary>
     public bool IsMonitoring
     {
@@ -84,29 +87,33 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     }
 
     /// <summary>
-    /// Gets the current monitoring configuration.
+    ///     Gets the current monitoring configuration.
     /// </summary>
-    public MonitoringConfiguration Configuration => _configuration;
+    public MonitoringConfiguration Configuration { get; private set; }
 
     /// <summary>
-    /// Gets the most recent statistics.
+    ///     Gets the most recent statistics.
     /// </summary>
-    public PapyrusStats? LastStats => _lastStats;
+    public PapyrusStats? LastStats { get; private set; }
 
     /// <summary>
-    /// Starts monitoring the configured log file.
+    ///     Starts monitoring the configured log file.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the monitoring operation</param>
     /// <returns>A task that completes when monitoring has started</returns>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (_disposed)
+        {
             throw new ObjectDisposedException(nameof(PapyrusMonitorService));
+        }
 
         lock (_lock)
         {
             if (_isMonitoring)
+            {
                 return;
+            }
 
             _isMonitoring = true;
         }
@@ -114,7 +121,7 @@ public class PapyrusMonitorService : IPapyrusMonitorService
         try
         {
             // Validate configuration
-            var validationErrors = _configuration.Validate();
+            var validationErrors = Configuration.Validate();
             if (validationErrors.Any())
             {
                 var errorMessage = string.Join("; ", validationErrors);
@@ -123,7 +130,7 @@ public class PapyrusMonitorService : IPapyrusMonitorService
             }
 
             // Check if log file path is configured
-            if (string.IsNullOrWhiteSpace(_configuration.LogFilePath))
+            if (string.IsNullOrWhiteSpace(Configuration.LogFilePath))
             {
                 _errorSubject.OnNext("Log file path is not configured");
                 return;
@@ -132,12 +139,12 @@ public class PapyrusMonitorService : IPapyrusMonitorService
             _monitoringCancellation = new CancellationTokenSource();
 
             // Initialize tail reader
-            await _tailReader.InitializeAsync(_configuration.LogFilePath, startFromEnd: false, cancellationToken);
+            await _tailReader.InitializeAsync(Configuration.LogFilePath, false, cancellationToken);
 
             // Start file watching or polling based on configuration
-            if (_configuration.UseFileWatcher)
+            if (Configuration.UseFileWatcher)
             {
-                await _fileWatcher.StartWatchingAsync(_configuration.LogFilePath, cancellationToken);
+                await _fileWatcher.StartWatchingAsync(Configuration.LogFilePath, cancellationToken);
             }
             else
             {
@@ -153,12 +160,13 @@ public class PapyrusMonitorService : IPapyrusMonitorService
             {
                 _isMonitoring = false;
             }
+
             _errorSubject.OnNext($"Failed to start monitoring: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Stops monitoring the log file.
+    ///     Stops monitoring the log file.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the stop operation</param>
     /// <returns>A task that completes when monitoring has stopped</returns>
@@ -167,7 +175,9 @@ public class PapyrusMonitorService : IPapyrusMonitorService
         lock (_lock)
         {
             if (!_isMonitoring)
+            {
                 return;
+            }
 
             _isMonitoring = false;
         }
@@ -197,15 +207,18 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     }
 
     /// <summary>
-    /// Updates the monitoring configuration.
+    ///     Updates the monitoring configuration.
     /// </summary>
     /// <param name="configuration">The new configuration to use</param>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when the configuration has been updated</returns>
-    public async Task UpdateConfigurationAsync(MonitoringConfiguration configuration, CancellationToken cancellationToken = default)
+    public async Task UpdateConfigurationAsync(MonitoringConfiguration configuration,
+        CancellationToken cancellationToken = default)
     {
         if (configuration == null)
+        {
             throw new ArgumentNullException(nameof(configuration));
+        }
 
         var wasMonitoring = IsMonitoring;
 
@@ -214,7 +227,7 @@ public class PapyrusMonitorService : IPapyrusMonitorService
             await StopAsync(cancellationToken);
         }
 
-        _configuration = configuration;
+        Configuration = configuration;
 
         if (wasMonitoring)
         {
@@ -223,24 +236,26 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     }
 
     /// <summary>
-    /// Forces an immediate update of statistics.
+    ///     Forces an immediate update of statistics.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when the update is finished</returns>
     public async Task ForceUpdateAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_configuration.LogFilePath))
+        if (string.IsNullOrWhiteSpace(Configuration.LogFilePath))
+        {
             return;
+        }
 
         try
         {
             // Parse the entire file to get current stats
-            var stats = await _logParser.ParseFileAsync(_configuration.LogFilePath, cancellationToken);
-            
+            var stats = await _logParser.ParseFileAsync(Configuration.LogFilePath, cancellationToken);
+
             // Only emit if stats have changed
-            if (_lastStats == null || !_lastStats.Equals(stats))
+            if (LastStats == null || !LastStats.Equals(stats))
             {
-                _lastStats = stats;
+                LastStats = stats;
                 _statsSubject.OnNext(stats);
             }
         }
@@ -251,12 +266,14 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     }
 
     /// <summary>
-    /// Disposes the monitoring service and releases all resources.
+    ///     Disposes the monitoring service and releases all resources.
     /// </summary>
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         var stopTask = StopAsync();
         try
@@ -283,34 +300,39 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     {
         var cancellation = _monitoringCancellation;
         if (!_isMonitoring || _disposed || cancellation?.Token.IsCancellationRequested == true)
+        {
             return;
+        }
 
         try
         {
             var token = cancellation?.Token ?? CancellationToken.None;
-            
+
             // Check if there's new content to read
             if (!await _tailReader.HasNewContentAsync(token))
+            {
                 return;
+            }
 
             // Read new lines
             var newLines = await _tailReader.ReadNewLinesAsync(token);
-            
-            if (newLines.Any())
+
+            var enumerable = newLines as string[] ?? newLines.ToArray();
+            if (enumerable.Any())
             {
                 // Parse the new lines and update running totals
-                var entries = _logParser.ParseLines(newLines);
+                var entries = _logParser.ParseLines(enumerable);
                 var newStats = _logParser.AggregateStats(entries);
 
                 // Combine with existing stats if we have them
-                if (_lastStats != null)
+                if (LastStats != null)
                 {
                     var combinedStats = new PapyrusStats(
                         DateTime.Now,
-                        _lastStats.Dumps + newStats.Dumps,
-                        _lastStats.Stacks + newStats.Stacks,
-                        _lastStats.Warnings + newStats.Warnings,
-                        _lastStats.Errors + newStats.Errors,
+                        LastStats.Dumps + newStats.Dumps,
+                        LastStats.Stacks + newStats.Stacks,
+                        LastStats.Warnings + newStats.Warnings,
+                        LastStats.Errors + newStats.Errors,
                         0.0 // Will be recalculated
                     );
 
@@ -319,10 +341,10 @@ public class PapyrusMonitorService : IPapyrusMonitorService
                     combinedStats = combinedStats with { Ratio = ratio };
 
                     // Only emit if different from last stats
-                    if (!_lastStats.Equals(combinedStats))
+                    if (!LastStats.Equals(combinedStats))
                     {
-                        _lastStats = combinedStats;
-                        
+                        LastStats = combinedStats;
+
                         // Check if not disposed before emitting
                         if (!_disposed)
                         {
@@ -332,8 +354,8 @@ public class PapyrusMonitorService : IPapyrusMonitorService
                 }
                 else
                 {
-                    _lastStats = newStats;
-                    
+                    LastStats = newStats;
+
                     // Check if not disposed before emitting
                     if (!_disposed)
                     {
@@ -354,8 +376,11 @@ public class PapyrusMonitorService : IPapyrusMonitorService
 
     private void StartPollingTimer()
     {
-        _pollingTimer = new Timer(async _ => await ProcessFileChangeAsync(), 
-            null, TimeSpan.Zero, TimeSpan.FromMilliseconds(_configuration.UpdateIntervalMs));
+        _pollingTimer = new Timer(async void (_) =>
+            {
+                await ProcessFileChangeAsync();
+            },
+            null, TimeSpan.Zero, TimeSpan.FromMilliseconds(Configuration.UpdateIntervalMs));
     }
 
     private void HandleError(Exception ex)

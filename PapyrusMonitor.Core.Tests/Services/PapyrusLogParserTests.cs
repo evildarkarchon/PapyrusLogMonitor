@@ -93,10 +93,7 @@ public class PapyrusLogParserTests
         // Arrange
         var lines = new[]
         {
-            "Dumping Stacks to file",
-            "Dumping Stack frame",
-            "Script warning: test",
-            "Script error: test",
+            "Dumping Stacks to file", "Dumping Stack frame", "Script warning: test", "Script error: test",
             "Regular message"
         };
 
@@ -206,11 +203,17 @@ Script error: Test error
 
     [Theory]
     [InlineData("")]
-    [InlineData(null)]
     [InlineData("   ")]
     public async Task ParseFileAsync_InvalidPath_ThrowsArgumentException(string filePath)
     {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => _parser.ParseFileAsync(filePath));
+    }
+
+    [Fact]
+    public async Task ParseFileAsync_NullPath_ThrowsArgumentException()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => _parser.ParseFileAsync(null!));
     }
 }

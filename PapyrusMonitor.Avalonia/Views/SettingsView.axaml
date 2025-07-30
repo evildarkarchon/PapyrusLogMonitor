@@ -6,21 +6,21 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="PapyrusMonitor.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
-    
+
     <ScrollViewer Padding="20">
         <StackPanel Spacing="20">
             <!-- General Settings -->
             <Border Classes="settings-section">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="General Settings" Classes="settings-header"/>
-                    
+                    <TextBlock Text="General Settings" Classes="settings-header" />
+
                     <!-- Log File Path -->
                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
-                        <TextBlock Text="Log File Path" Classes="settings-label" Grid.Row="0" Grid.ColumnSpan="2"/>
-                        <TextBox Text="{Binding LogFilePath}" 
-                                Classes="settings-input"
-                                Grid.Row="1" Grid.Column="0"
-                                Watermark="Path to Papyrus log file..."/>
+                        <TextBlock Text="Log File Path" Classes="settings-label" Grid.Row="0" Grid.ColumnSpan="2" />
+                        <TextBox Text="{Binding LogFilePath}"
+                                 Classes="settings-input"
+                                 Grid.Row="1" Grid.Column="0"
+                                 Watermark="Path to Papyrus log file..." />
                         <Button Command="{Binding BrowseLogFileCommand}"
                                 Grid.Row="1" Grid.Column="1"
                                 Margin="4,0,0,0"
@@ -31,41 +31,41 @@
 
                     <!-- Update Interval -->
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
-                        <TextBlock Text="Update Interval (ms)" Classes="settings-label" Grid.Row="0"/>
+                        <TextBlock Text="Update Interval (ms)" Classes="settings-label" Grid.Row="0" />
                         <NumericUpDown Value="{Binding UpdateInterval}"
-                                      Classes="settings-input"
-                                      Grid.Row="1"
-                                      Minimum="100"
-                                      Maximum="10000"
-                                      Increment="100"
-                                      FormatString="0"/>
+                                       Classes="settings-input"
+                                       Grid.Row="1"
+                                       Minimum="100"
+                                       Maximum="10000"
+                                       Increment="100"
+                                       FormatString="0" />
                         <TextBlock Text="How often to check for log file changes"
-                                  Classes="settings-help"
-                                  Grid.Row="2"/>
+                                   Classes="settings-help"
+                                   Grid.Row="2" />
                     </Grid>
 
                     <!-- Auto Start -->
                     <CheckBox IsChecked="{Binding AutoStartMonitoring}">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Auto-start monitoring" Classes="settings-label"/>
+                            <TextBlock Text="Auto-start monitoring" Classes="settings-label" />
                             <TextBlock Text="Begin monitoring when application starts"
-                                      Classes="settings-help"/>
+                                       Classes="settings-help" />
                         </StackPanel>
                     </CheckBox>
 
                     <!-- Max Log Entries -->
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
-                        <TextBlock Text="Maximum Log Entries" Classes="settings-label" Grid.Row="0"/>
+                        <TextBlock Text="Maximum Log Entries" Classes="settings-label" Grid.Row="0" />
                         <NumericUpDown Value="{Binding MaxLogEntries}"
-                                      Classes="settings-input"
-                                      Grid.Row="1"
-                                      Minimum="1000"
-                                      Maximum="100000"
-                                      Increment="1000"
-                                      FormatString="0"/>
+                                       Classes="settings-input"
+                                       Grid.Row="1"
+                                       Minimum="1000"
+                                       Maximum="100000"
+                                       Increment="1000"
+                                       FormatString="0" />
                         <TextBlock Text="Maximum number of log entries to keep in memory"
-                                  Classes="settings-help"
-                                  Grid.Row="2"/>
+                                   Classes="settings-help"
+                                   Grid.Row="2" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -73,21 +73,21 @@
             <!-- Notification Settings -->
             <Border Classes="settings-section">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="Notifications" Classes="settings-header"/>
-                    
+                    <TextBlock Text="Notifications" Classes="settings-header" />
+
                     <CheckBox IsChecked="{Binding ShowErrorNotifications}">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Show error notifications" Classes="settings-label"/>
+                            <TextBlock Text="Show error notifications" Classes="settings-label" />
                             <TextBlock Text="Display notifications when errors are detected"
-                                      Classes="settings-help"/>
+                                       Classes="settings-help" />
                         </StackPanel>
                     </CheckBox>
 
                     <CheckBox IsChecked="{Binding ShowWarningNotifications}">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Show warning notifications" Classes="settings-label"/>
+                            <TextBlock Text="Show warning notifications" Classes="settings-label" />
                             <TextBlock Text="Display notifications when warnings are detected"
-                                      Classes="settings-help"/>
+                                       Classes="settings-help" />
                         </StackPanel>
                     </CheckBox>
                 </StackPanel>
@@ -96,15 +96,15 @@
             <!-- Export Settings -->
             <Border Classes="settings-section">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="Export Settings" Classes="settings-header"/>
-                    
+                    <TextBlock Text="Export Settings" Classes="settings-header" />
+
                     <!-- Export Path -->
                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
-                        <TextBlock Text="Default Export Path" Classes="settings-label" Grid.Row="0" Grid.ColumnSpan="2"/>
-                        <TextBox Text="{Binding DefaultExportPath}" 
-                                Classes="settings-input"
-                                Grid.Row="1" Grid.Column="0"
-                                Watermark="Default directory for exports..."/>
+                        <TextBlock Text="Default Export Path" Classes="settings-label" Grid.Row="0" Grid.ColumnSpan="2" />
+                        <TextBox Text="{Binding DefaultExportPath}"
+                                 Classes="settings-input"
+                                 Grid.Row="1" Grid.Column="0"
+                                 Watermark="Default directory for exports..." />
                         <Button Command="{Binding BrowseExportPathCommand}"
                                 Grid.Row="1" Grid.Column="1"
                                 Margin="4,0,0,0"
@@ -116,22 +116,22 @@
                     <!-- Include Timestamps -->
                     <CheckBox IsChecked="{Binding IncludeTimestamps}">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Include timestamps in exports" Classes="settings-label"/>
+                            <TextBlock Text="Include timestamps in exports" Classes="settings-label" />
                             <TextBlock Text="Add timestamp columns to exported data"
-                                      Classes="settings-help"/>
+                                       Classes="settings-help" />
                         </StackPanel>
                     </CheckBox>
 
                     <!-- Date Format -->
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
-                        <TextBlock Text="Date Format" Classes="settings-label" Grid.Row="0"/>
+                        <TextBlock Text="Date Format" Classes="settings-label" Grid.Row="0" />
                         <TextBox Text="{Binding DateFormat}"
-                                Classes="settings-input"
-                                Grid.Row="1"
-                                Watermark="yyyy-MM-dd HH:mm:ss"/>
+                                 Classes="settings-input"
+                                 Grid.Row="1"
+                                 Watermark="yyyy-MM-dd HH:mm:ss" />
                         <TextBlock Text="Format for dates in exports (uses .NET format strings)"
-                                  Classes="settings-help"
-                                  Grid.Row="2"/>
+                                   Classes="settings-help"
+                                   Grid.Row="2" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -144,7 +144,7 @@
                         Classes="danger">
                     Reset to Defaults
                 </Button>
-                
+
                 <Button Command="{Binding CancelCommand}"
                         Grid.Column="2"
                         Width="80"
@@ -152,18 +152,18 @@
                         IsEnabled="{Binding HasChanges}">
                     Cancel
                 </Button>
-                
+
                 <Button Command="{Binding SaveCommand}"
                         Grid.Column="3"
                         Width="80"
                         Classes="accent"
                         IsEnabled="{Binding HasChanges}">
                     <Grid>
-                        <TextBlock Text="Save" IsVisible="{Binding !IsSaving}"/>
-                        <ProgressBar IsIndeterminate="True" 
-                                    Height="16" 
-                                    Width="60"
-                                    IsVisible="{Binding IsSaving}"/>
+                        <TextBlock Text="Save" IsVisible="{Binding !IsSaving}" />
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="16"
+                                     Width="60"
+                                     IsVisible="{Binding IsSaving}" />
                     </Grid>
                 </Button>
             </Grid>
@@ -172,41 +172,41 @@
 
     <UserControl.Styles>
         <Style Selector="Border.settings-section">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
         </Style>
-        
+
         <Style Selector="TextBlock.settings-header">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
-        
+
         <Style Selector="TextBlock.settings-label">
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         </Style>
-        
+
         <Style Selector="TextBlock.settings-help">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
-        
+
         <Style Selector="TextBox.settings-input, NumericUpDown.settings-input">
-            <Setter Property="Width" Value="300"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Width" Value="300" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
-        
+
         <Style Selector="Button.danger">
-            <Setter Property="Background" Value="#CC3333"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#CC3333" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
-        
+
         <Style Selector="Button.danger:pointerover">
-            <Setter Property="Background" Value="#DD4444"/>
+            <Setter Property="Background" Value="#DD4444" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -8,7 +8,7 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="PapyrusMonitor.Avalonia.Views.PapyrusMonitorView"
              x:DataType="vm:PapyrusMonitorViewModel">
-             
+
     <Design.DataContext>
         <vm:PapyrusMonitorViewModel />
     </Design.DataContext>
@@ -19,7 +19,7 @@
             <TextBlock Text="Papyrus Log Monitoring"
                        Classes="h1"
                        HorizontalAlignment="Center" />
-            
+
             <!-- Timestamp Display -->
             <TextBlock Text="{Binding LastUpdateTime, StringFormat='Last Updated: {0:HH:mm:ss}'}"
                        FontSize="14"
@@ -29,104 +29,107 @@
         </StackPanel>
 
         <!-- Statistics Grid -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="1"
                 Margin="0,20"
                 Classes="card">
             <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                 <!-- Headers -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Metric" FontWeight="Bold" Margin="0,0,20,10" />
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="Value" FontWeight="Bold" Margin="0,0,20,10" HorizontalAlignment="Center" />
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="Status" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Value" FontWeight="Bold" Margin="0,0,20,10"
+                           HorizontalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Status" FontWeight="Bold" Margin="0,0,0,10"
+                           HorizontalAlignment="Center" />
 
                 <!-- Dumps Row -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Dumps" VerticalAlignment="Center" Margin="0,5" />
-                <Border Grid.Row="1" Grid.Column="1" 
+                <Border Grid.Row="1" Grid.Column="1"
                         Classes="stat-value"
                         Margin="0,5,20,5"
                         RenderTransformOrigin="0.5,0.5">
-                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Dumps}" 
-                                                      FormatString="F0"
-                                                      EnableAnimations="{Binding EnableAnimations}"
-                                                      HorizontalAlignment="Center"
-                                                      FontWeight="SemiBold" />
+                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Dumps}"
+                                                       FormatString="F0"
+                                                       EnableAnimations="{Binding EnableAnimations}"
+                                                       HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold" />
                 </Border>
-                <controls:AnimatedStatusIndicator Grid.Row="1" Grid.Column="2" 
-                                                StatusText="✓" 
-                                                StatusColor="Green"
-                                                EnableAnimations="{Binding EnableAnimations}"
-                                                Margin="0,5" />
+                <controls:AnimatedStatusIndicator Grid.Row="1" Grid.Column="2"
+                                                  StatusText="✓"
+                                                  StatusColor="Green"
+                                                  EnableAnimations="{Binding EnableAnimations}"
+                                                  Margin="0,5" />
 
                 <!-- Stacks Row -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Stacks" VerticalAlignment="Center" Margin="0,5" />
-                <Border Grid.Row="2" Grid.Column="1" 
+                <Border Grid.Row="2" Grid.Column="1"
                         Classes="stat-value"
                         Margin="0,5,20,5"
                         RenderTransformOrigin="0.5,0.5">
-                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Stacks}" 
-                                                      FormatString="F0"
-                                                      EnableAnimations="{Binding EnableAnimations}"
-                                                      HorizontalAlignment="Center"
-                                                      FontWeight="SemiBold" />
+                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Stacks}"
+                                                       FormatString="F0"
+                                                       EnableAnimations="{Binding EnableAnimations}"
+                                                       HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold" />
                 </Border>
-                <controls:AnimatedStatusIndicator Grid.Row="2" Grid.Column="2" 
-                                                StatusText="✓" 
-                                                StatusColor="Green"
-                                                EnableAnimations="{Binding EnableAnimations}"
-                                                Margin="0,5" />
+                <controls:AnimatedStatusIndicator Grid.Row="2" Grid.Column="2"
+                                                  StatusText="✓"
+                                                  StatusColor="Green"
+                                                  EnableAnimations="{Binding EnableAnimations}"
+                                                  Margin="0,5" />
 
                 <!-- Dumps/Stacks Ratio Row -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Dumps/Stacks Ratio" VerticalAlignment="Center" Margin="0,5" />
-                <Border Grid.Row="3" Grid.Column="1" 
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Dumps/Stacks Ratio" VerticalAlignment="Center"
+                           Margin="0,5" />
+                <Border Grid.Row="3" Grid.Column="1"
                         Classes="stat-value"
                         Margin="0,5,20,5"
                         RenderTransformOrigin="0.5,0.5">
-                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Ratio}" 
-                                                      FormatString="F3"
-                                                      EnableAnimations="{Binding EnableAnimations}"
-                                                      HorizontalAlignment="Center"
-                                                      FontWeight="SemiBold" />
+                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Ratio}"
+                                                       FormatString="F3"
+                                                       EnableAnimations="{Binding EnableAnimations}"
+                                                       HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold" />
                 </Border>
-                <controls:AnimatedStatusIndicator Grid.Row="3" Grid.Column="2" 
-                                                StatusText="{Binding RatioStatus}" 
-                                                StatusColor="{Binding RatioStatusColor}"
-                                                EnableAnimations="{Binding EnableAnimations}"
-                                                Margin="0,5" />
+                <controls:AnimatedStatusIndicator Grid.Row="3" Grid.Column="2"
+                                                  StatusText="{Binding RatioStatus}"
+                                                  StatusColor="{Binding RatioStatusColor}"
+                                                  EnableAnimations="{Binding EnableAnimations}"
+                                                  Margin="0,5" />
 
                 <!-- Warnings Row -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Warnings" VerticalAlignment="Center" Margin="0,5" />
-                <Border Grid.Row="4" Grid.Column="1" 
+                <Border Grid.Row="4" Grid.Column="1"
                         Classes="stat-value"
                         Margin="0,5,20,5"
                         RenderTransformOrigin="0.5,0.5">
-                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Warnings}" 
-                                                      FormatString="F0"
-                                                      EnableAnimations="{Binding EnableAnimations}"
-                                                      HorizontalAlignment="Center"
-                                                      FontWeight="SemiBold" />
+                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Warnings}"
+                                                       FormatString="F0"
+                                                       EnableAnimations="{Binding EnableAnimations}"
+                                                       HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold" />
                 </Border>
-                <controls:AnimatedStatusIndicator Grid.Row="4" Grid.Column="2" 
-                                                StatusText="{Binding WarningsStatus}" 
-                                                StatusColor="{Binding WarningsStatusColor}"
-                                                EnableAnimations="{Binding EnableAnimations}"
-                                                Margin="0,5" />
+                <controls:AnimatedStatusIndicator Grid.Row="4" Grid.Column="2"
+                                                  StatusText="{Binding WarningsStatus}"
+                                                  StatusColor="{Binding WarningsStatusColor}"
+                                                  EnableAnimations="{Binding EnableAnimations}"
+                                                  Margin="0,5" />
 
                 <!-- Errors Row -->
                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Errors" VerticalAlignment="Center" Margin="0,5" />
-                <Border Grid.Row="5" Grid.Column="1" 
+                <Border Grid.Row="5" Grid.Column="1"
                         Classes="stat-value"
                         Margin="0,5,20,5"
                         RenderTransformOrigin="0.5,0.5">
-                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Errors}" 
-                                                      FormatString="F0"
-                                                      EnableAnimations="{Binding EnableAnimations}"
-                                                      HorizontalAlignment="Center"
-                                                      FontWeight="SemiBold" />
+                    <controls:AnimatedNumericTextBlock Value="{Binding Statistics.Errors}"
+                                                       FormatString="F0"
+                                                       EnableAnimations="{Binding EnableAnimations}"
+                                                       HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold" />
                 </Border>
-                <controls:AnimatedStatusIndicator Grid.Row="5" Grid.Column="2" 
-                                                StatusText="{Binding ErrorsStatus}" 
-                                                StatusColor="{Binding ErrorsStatusColor}"
-                                                EnableAnimations="{Binding EnableAnimations}"
-                                                Margin="0,5" />
+                <controls:AnimatedStatusIndicator Grid.Row="5" Grid.Column="2"
+                                                  StatusText="{Binding ErrorsStatus}"
+                                                  StatusColor="{Binding ErrorsStatusColor}"
+                                                  EnableAnimations="{Binding EnableAnimations}"
+                                                  Margin="0,5" />
             </Grid>
         </Border>
 
@@ -156,8 +159,10 @@
                         Width="175"
                         Height="40">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="{Binding MonitoringButtonIcon, FallbackValue='▶️'}" FontSize="16" Foreground="White" />
-                        <TextBlock Text="{Binding MonitoringButtonText, FallbackValue='Start Monitoring'}" VerticalAlignment="Center" Foreground="White" />
+                        <TextBlock Text="{Binding MonitoringButtonIcon, FallbackValue='▶️'}" FontSize="16"
+                                   Foreground="White" />
+                        <TextBlock Text="{Binding MonitoringButtonText, FallbackValue='Start Monitoring'}"
+                                   VerticalAlignment="Center" Foreground="White" />
                     </StackPanel>
                 </Button>
 
@@ -171,18 +176,18 @@
                     </StackPanel>
                 </Button>
             </StackPanel>
-            
+
             <!-- Export and Analysis Buttons -->
-            <StackPanel Grid.Row="1" 
-                        Orientation="Horizontal" 
-                        HorizontalAlignment="Center" 
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
                         Spacing="15"
                         IsVisible="{Binding IsMonitoring}">
-                <TextBlock Text="Export:" 
-                           VerticalAlignment="Center" 
+                <TextBlock Text="Export:"
+                           VerticalAlignment="Center"
                            FontWeight="Medium"
-                           Margin="0,0,10,0"/>
-                
+                           Margin="0,0,10,0" />
+
                 <Button Command="{ReflectionBinding $parent[Window].DataContext.ExportCommand}"
                         CommandParameter="{x:Static export:ExportFormat.Csv}"
                         IsEnabled="{ReflectionBinding !$parent[Window].DataContext.IsExporting}"
@@ -192,7 +197,7 @@
                         <TextBlock Text="Export CSV" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                
+
                 <Button Command="{ReflectionBinding $parent[Window].DataContext.ExportCommand}"
                         CommandParameter="{x:Static export:ExportFormat.Json}"
                         IsEnabled="{ReflectionBinding !$parent[Window].DataContext.IsExporting}"
@@ -202,9 +207,10 @@
                         <TextBlock Text="Export JSON" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                
-                <Rectangle Width="1" Height="20" Fill="{DynamicResource SystemControlForegroundBaseLowBrush}" Margin="10,0" />
-                
+
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                           Margin="10,0" />
+
                 <Button Command="{ReflectionBinding $parent[Window].DataContext.ShowTrendAnalysisCommand}"
                         Height="35">
                     <StackPanel Orientation="Horizontal" Spacing="6">

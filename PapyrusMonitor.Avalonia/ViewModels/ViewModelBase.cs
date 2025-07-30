@@ -5,17 +5,17 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class ViewModelBase : ReactiveObject, IActivatableViewModel
 {
-    public ViewModelActivator Activator { get; }
-
     protected ViewModelBase()
     {
         Activator = new ViewModelActivator();
-        
-        this.WhenActivated(disposables =>
+
+        ViewForMixins.WhenActivated((IActivatableViewModel)this, (CompositeDisposable disposables) =>
         {
             HandleActivation(disposables);
         });
     }
+
+    public ViewModelActivator Activator { get; }
 
     protected virtual void HandleActivation(CompositeDisposable disposables)
     {

@@ -1,20 +1,20 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using PapyrusMonitor.Core.Serialization;
 
 namespace PapyrusMonitor.Core.Configuration;
 
 /// <summary>
-/// JSON-based implementation of settings service
+///     JSON-based implementation of settings service
 /// </summary>
 public class JsonSettingsService : ISettingsService, IDisposable
 {
+    private readonly FileSystemWatcher? _fileWatcher;
+    private readonly PapyrusMonitorJsonContext _jsonContext;
     private readonly ILogger<JsonSettingsService> _logger;
     private readonly Subject<AppSettings> _settingsChangedSubject;
-    private readonly FileSystemWatcher? _fileWatcher;
-    private readonly JsonSerializerOptions _jsonOptions;
     private readonly object _settingsLock = new();
     private AppSettings _currentSettings;
     private bool _isDisposed;
@@ -24,29 +24,22 @@ public class JsonSettingsService : ISettingsService, IDisposable
         _logger = logger;
         _settingsChangedSubject = new Subject<AppSettings>();
         _currentSettings = new AppSettings();
-        
-        _jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter() }
-        };
+
+        _jsonContext = new PapyrusMonitorJsonContext();
 
         // Setup file watcher for hot-reload
         var directory = Path.GetDirectoryName(SettingsFilePath);
         var fileName = Path.GetFileName(SettingsFilePath);
-        
+
         if (!string.IsNullOrEmpty(directory) && !string.IsNullOrEmpty(fileName))
         {
             try
             {
                 _fileWatcher = new FileSystemWatcher(directory, fileName)
                 {
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-                    EnableRaisingEvents = true
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size, EnableRaisingEvents = true
                 };
-                
+
                 _fileWatcher.Changed += OnSettingsFileChanged;
             }
             catch (Exception ex)
@@ -54,6 +47,20 @@ public class JsonSettingsService : ISettingsService, IDisposable
                 _logger.LogWarning(ex, "Failed to setup file watcher for settings hot-reload");
             }
         }
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _fileWatcher?.Dispose();
+        _settingsChangedSubject.OnCompleted();
+        _settingsChangedSubject.Dispose();
+
+        _isDisposed = true;
     }
 
     public AppSettings Settings
@@ -67,7 +74,10 @@ public class JsonSettingsService : ISettingsService, IDisposable
         }
     }
 
-    public IObservable<AppSettings> SettingsChanged => _settingsChangedSubject.AsObservable();
+    public IObservable<AppSettings> SettingsChanged
+    {
+        get => _settingsChangedSubject.AsObservable();
+    }
 
     public string SettingsFilePath
     {
@@ -92,8 +102,8 @@ public class JsonSettingsService : ISettingsService, IDisposable
             }
 
             var json = await File.ReadAllTextAsync(SettingsFilePath);
-            var settings = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions);
-            
+            var settings = JsonSerializer.Deserialize(json, _jsonContext.AppSettings);
+
             if (settings == null)
             {
                 _logger.LogWarning("Failed to deserialize settings, using defaults");
@@ -107,7 +117,7 @@ public class JsonSettingsService : ISettingsService, IDisposable
 
             _settingsChangedSubject.OnNext(settings);
             _logger.LogInformation("Settings loaded successfully from {Path}", SettingsFilePath);
-            
+
             return settings;
         }
         catch (Exception ex)
@@ -129,8 +139,8 @@ public class JsonSettingsService : ISettingsService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(settings, _jsonOptions);
-            
+            var json = JsonSerializer.Serialize(settings, _jsonContext.AppSettings);
+
             // Disable file watcher temporarily to avoid triggering reload
             if (_fileWatcher != null)
             {
@@ -176,7 +186,7 @@ public class JsonSettingsService : ISettingsService, IDisposable
     {
         // Debounce file changes
         await Task.Delay(100);
-        
+
         try
         {
             _logger.LogDebug("Settings file changed, reloading...");
@@ -186,16 +196,5 @@ public class JsonSettingsService : ISettingsService, IDisposable
         {
             _logger.LogError(ex, "Failed to reload settings after file change");
         }
-    }
-
-    public void Dispose()
-    {
-        if (_isDisposed) return;
-
-        _fileWatcher?.Dispose();
-        _settingsChangedSubject.OnCompleted();
-        _settingsChangedSubject.Dispose();
-        
-        _isDisposed = true;
     }
 }

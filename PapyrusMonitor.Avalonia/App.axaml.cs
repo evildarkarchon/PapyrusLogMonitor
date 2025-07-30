@@ -1,18 +1,22 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using PapyrusMonitor.Avalonia.ViewModels;
 using PapyrusMonitor.Avalonia.Views;
+using PapyrusMonitor.Core.Analytics;
+using PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Export;
+using PapyrusMonitor.Core.Interfaces;
+using PapyrusMonitor.Core.Services;
 
 namespace PapyrusMonitor.Avalonia;
 
-public partial class App : Application
+public class App : Application
 {
     /// <summary>
-    /// Gets or sets the service provider for dependency injection.
-    /// This is set by the Program.cs during application startup.
+    ///     Gets or sets the service provider for dependency injection.
+    ///     This is set by the Program.cs during application startup.
     /// </summary>
     public static IServiceProvider? ServiceProvider { get; set; }
 
@@ -28,34 +32,41 @@ public partial class App : Application
             throw new InvalidOperationException("ServiceProvider must be set before framework initialization.");
         }
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        switch (ApplicationLifetime)
         {
-            var mainWindow = new MainWindow();
-            
-            // Create MainWindowViewModel with storage provider
-            var papyrusMonitorViewModel = ServiceProvider.GetRequiredService<PapyrusMonitorViewModel>();
-            var settingsService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Configuration.ISettingsService>();
-            var exportService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Export.IExportService>();
-            var sessionHistoryService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Services.ISessionHistoryService>();
-            var trendAnalysisService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Analytics.ITrendAnalysisService>();
-            
-            var mainWindowViewModel = new MainWindowViewModel(
-                papyrusMonitorViewModel,
-                settingsService,
-                exportService,
-                sessionHistoryService,
-                trendAnalysisService,
-                mainWindow.StorageProvider);
-            
-            mainWindow.DataContext = mainWindowViewModel;
-            desktop.MainWindow = mainWindow;
-        }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            singleViewPlatform.MainView = new MainView
+            case IClassicDesktopStyleApplicationLifetime desktop:
             {
-                DataContext = ServiceProvider.GetRequiredService<MainViewModel>()
-            };
+                var mainWindow = new MainWindow();
+
+                // Create MainWindowViewModel with storage provider
+                var papyrusMonitorViewModel = ServiceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+                var settingsService = ServiceProvider.GetRequiredService<ISettingsService>();
+                var exportService = ServiceProvider.GetRequiredService<IExportService>();
+                var sessionHistoryService = ServiceProvider.GetRequiredService<ISessionHistoryService>();
+                var trendAnalysisService = ServiceProvider.GetRequiredService<ITrendAnalysisService>();
+                var schedulerProvider = ServiceProvider.GetRequiredService<ISchedulerProvider>();
+                var logger = ServiceProvider.GetRequiredService<ILogger>();
+
+                var mainWindowViewModel = new MainWindowViewModel(
+                    papyrusMonitorViewModel,
+                    settingsService,
+                    exportService,
+                    sessionHistoryService,
+                    trendAnalysisService,
+                    schedulerProvider,
+                    logger,
+                    mainWindow.StorageProvider);
+
+                mainWindow.DataContext = mainWindowViewModel;
+                desktop.MainWindow = mainWindow;
+                break;
+            }
+            case ISingleViewApplicationLifetime singleViewPlatform:
+                singleViewPlatform.MainView = new MainView
+                {
+                    DataContext = ServiceProvider.GetRequiredService<MainViewModel>()
+                };
+                break;
         }
 
         base.OnFrameworkInitializationCompleted();

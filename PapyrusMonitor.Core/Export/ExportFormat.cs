@@ -1,17 +1,17 @@
 namespace PapyrusMonitor.Core.Export;
 
 /// <summary>
-/// Supported export formats
+///     Supported export formats
 /// </summary>
 public enum ExportFormat
 {
     /// <summary>
-    /// Comma-separated values format
+    ///     Comma-separated values format
     /// </summary>
     Csv,
-    
+
     /// <summary>
-    /// JavaScript Object Notation format
+    ///     JavaScript Object Notation format
     /// </summary>
     Json
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Avalonia.Media;
@@ -9,37 +8,16 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class StatisticsViewModel : ViewModelBase, IDisposable
 {
-    private PapyrusStats? _currentStats;
-    private string _lastUpdateTime = "Never";
     private readonly ObservableAsPropertyHelper<string> _dumpsDisplay;
-    private readonly ObservableAsPropertyHelper<string> _stacksDisplay;
-    private readonly ObservableAsPropertyHelper<string> _warningsDisplay;
     private readonly ObservableAsPropertyHelper<string> _errorsDisplay;
     private readonly ObservableAsPropertyHelper<string> _ratioDisplay;
-    private readonly ObservableAsPropertyHelper<string> _statusIcon;
+    private readonly ObservableAsPropertyHelper<string> _stacksDisplay;
     private readonly ObservableAsPropertyHelper<IBrush> _statusColor;
+    private readonly ObservableAsPropertyHelper<string> _statusIcon;
     private readonly ObservableAsPropertyHelper<string> _statusText;
-
-    public PapyrusStats? CurrentStats
-    {
-        get => _currentStats;
-        private set => this.RaiseAndSetIfChanged(ref _currentStats, value);
-    }
-
-    public string LastUpdateTime
-    {
-        get => _lastUpdateTime;
-        private set => this.RaiseAndSetIfChanged(ref _lastUpdateTime, value);
-    }
-
-    public string DumpsDisplay => _dumpsDisplay.Value;
-    public string StacksDisplay => _stacksDisplay.Value;
-    public string WarningsDisplay => _warningsDisplay.Value;
-    public string ErrorsDisplay => _errorsDisplay.Value;
-    public string RatioDisplay => _ratioDisplay.Value;
-    public string StatusIcon => _statusIcon.Value;
-    public IBrush StatusColor => _statusColor.Value;
-    public string StatusText => _statusText.Value;
+    private readonly ObservableAsPropertyHelper<string> _warningsDisplay;
+    private PapyrusStats? _currentStats;
+    private string _lastUpdateTime = "Never";
 
     public StatisticsViewModel()
     {
@@ -74,9 +52,21 @@ public class StatisticsViewModel : ViewModelBase, IDisposable
         var statusObservable = statsObservable
             .Select(stats =>
             {
-                if (stats == null) return StatusLevel.None;
-                if (stats.Errors > 0 || stats.Ratio >= errorThreshold) return StatusLevel.Error;
-                if (stats.Warnings > 0 || stats.Ratio >= warningThreshold) return StatusLevel.Warning;
+                if (stats == null)
+                {
+                    return StatusLevel.None;
+                }
+
+                if (stats.Errors > 0 || stats.Ratio >= errorThreshold)
+                {
+                    return StatusLevel.Error;
+                }
+
+                if (stats.Warnings > 0 || stats.Ratio >= warningThreshold)
+                {
+                    return StatusLevel.Warning;
+                }
+
                 return StatusLevel.Good;
             });
 
@@ -111,6 +101,63 @@ public class StatisticsViewModel : ViewModelBase, IDisposable
             .ToProperty(this, x => x.StatusText);
     }
 
+    public PapyrusStats? CurrentStats
+    {
+        get => _currentStats;
+        private set => this.RaiseAndSetIfChanged(ref _currentStats, value);
+    }
+
+    public string LastUpdateTime
+    {
+        get => _lastUpdateTime;
+        private set => this.RaiseAndSetIfChanged(ref _lastUpdateTime, value);
+    }
+
+    public string DumpsDisplay
+    {
+        get => _dumpsDisplay.Value;
+    }
+
+    public string StacksDisplay
+    {
+        get => _stacksDisplay.Value;
+    }
+
+    public string WarningsDisplay
+    {
+        get => _warningsDisplay.Value;
+    }
+
+    public string ErrorsDisplay
+    {
+        get => _errorsDisplay.Value;
+    }
+
+    public string RatioDisplay
+    {
+        get => _ratioDisplay.Value;
+    }
+
+    public string StatusIcon
+    {
+        get => _statusIcon.Value;
+    }
+
+    public IBrush StatusColor
+    {
+        get => _statusColor.Value;
+    }
+
+    public string StatusText
+    {
+        get => _statusText.Value;
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+
     protected override void HandleActivation(CompositeDisposable disposables)
     {
         // Update time display every second when stats are available
@@ -136,7 +183,7 @@ public class StatisticsViewModel : ViewModelBase, IDisposable
         }
 
         var elapsed = DateTime.Now - CurrentStats.Timestamp;
-        
+
         LastUpdateTime = elapsed.TotalSeconds switch
         {
             < 1 => "Just now",
@@ -144,11 +191,6 @@ public class StatisticsViewModel : ViewModelBase, IDisposable
             < 3600 => $"{(int)elapsed.TotalMinutes} minutes ago",
             _ => CurrentStats.Timestamp.ToString("HH:mm:ss")
         };
-    }
-
-    public void Dispose()
-    {
-        // Cleanup if needed
     }
 
     private enum StatusLevel

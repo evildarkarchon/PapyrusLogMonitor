@@ -7,7 +7,7 @@
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
              x:Class="PapyrusMonitor.Avalonia.Views.TrendAnalysisView"
              x:DataType="vm:TrendAnalysisViewModel">
-    
+
     <Design.DataContext>
         <vm:TrendAnalysisViewModel />
     </Design.DataContext>
@@ -18,7 +18,7 @@
             <TextBlock Text="Trend Analysis"
                        Classes="h1"
                        HorizontalAlignment="Center" />
-            
+
             <TextBlock Text="{Binding StatusMessage}"
                        FontSize="14"
                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
@@ -27,7 +27,7 @@
         </StackPanel>
 
         <!-- Controls -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="1"
                 Margin="0,15,0,15"
                 Padding="15"
                 Classes="card">
@@ -35,7 +35,7 @@
                 <TextBlock Text="Moving Average Period:"
                            VerticalAlignment="Center"
                            Margin="0,0,10,0" />
-                
+
                 <NumericUpDown Grid.Column="1"
                                Value="{Binding MovingAveragePeriod}"
                                Minimum="2"
@@ -43,10 +43,10 @@
                                Increment="1"
                                Width="100"
                                IsEnabled="{Binding !IsLoading}" />
-                
+
                 <!-- Spacer -->
                 <Panel Grid.Column="2" />
-                
+
                 <Button Grid.Column="3"
                         Command="{Binding RefreshCommand}"
                         Width="100"
@@ -56,7 +56,7 @@
                         <TextBlock Text="Refresh" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                
+
                 <Button Grid.Column="4"
                         Command="{Binding CloseCommand}"
                         Width="80">
@@ -77,27 +77,27 @@
                     <RowDefinition Height="300" />
                     <RowDefinition Height="300" />
                 </Grid.RowDefinitions>
-                
+
                 <!-- Dumps Chart -->
                 <Border Grid.Row="0" Classes="chart-container" Margin="0,0,0,15">
                     <oxy:PlotView Model="{Binding DumpsPlotModel}" />
                 </Border>
-                
+
                 <!-- Stacks Chart -->
                 <Border Grid.Row="1" Classes="chart-container" Margin="0,0,0,15">
                     <oxy:PlotView Model="{Binding StacksPlotModel}" />
                 </Border>
-                
+
                 <!-- Warnings Chart -->
                 <Border Grid.Row="2" Classes="chart-container" Margin="0,0,0,15">
                     <oxy:PlotView Model="{Binding WarningsPlotModel}" />
                 </Border>
-                
+
                 <!-- Errors Chart -->
                 <Border Grid.Row="3" Classes="chart-container" Margin="0,0,0,15">
                     <oxy:PlotView Model="{Binding ErrorsPlotModel}" />
                 </Border>
-                
+
                 <!-- Ratio Chart -->
                 <Border Grid.Row="4" Classes="chart-container">
                     <oxy:PlotView Model="{Binding RatioPlotModel}" />
@@ -139,7 +139,8 @@
             <TextBlock FontSize="12"
                        TextAlignment="Center">
                 <TextBlock.Text>
-                    <MultiBinding StringFormat="Analysis Period: {0:yyyy-MM-dd HH:mm:ss} to {1:yyyy-MM-dd HH:mm:ss} ({2:hh\:mm\:ss})">
+                    <MultiBinding
+                        StringFormat="Analysis Period: {0:yyyy-MM-dd HH:mm:ss} to {1:yyyy-MM-dd HH:mm:ss} ({2:hh\:mm\:ss})">
                         <Binding Path="CurrentAnalysis.TimeRange.Start" />
                         <Binding Path="CurrentAnalysis.TimeRange.End" />
                         <Binding Path="CurrentAnalysis.TimeRange.Duration" />
@@ -151,23 +152,23 @@
 
     <UserControl.Styles>
         <Style Selector="Border.card">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
-        
+
         <Style Selector="Border.chart-container">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="10" />
         </Style>
-        
+
         <Style Selector="TextBlock.h1">
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="Light"/>
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Light" />
         </Style>
     </UserControl.Styles>
 </UserControl>

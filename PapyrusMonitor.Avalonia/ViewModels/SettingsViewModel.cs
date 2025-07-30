@@ -1,9 +1,8 @@
-using System;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Interfaces;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -11,9 +10,60 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {
+    private readonly ILogger _logger;
+    private readonly ISchedulerProvider _schedulerProvider;
     private readonly ISettingsService _settingsService;
     private readonly IStorageProvider? _storageProvider;
-    
+
+    public SettingsViewModel(ISettingsService settingsService, ISchedulerProvider schedulerProvider, ILogger logger,
+        IStorageProvider? storageProvider = null)
+    {
+        _settingsService = settingsService;
+        _storageProvider = storageProvider;
+        _schedulerProvider = schedulerProvider;
+        _logger = logger;
+
+        // Load current settings
+        LoadCurrentSettings(_settingsService.Settings);
+
+        // Subscribe to settings changes (hot-reload)
+        _settingsService.SettingsChanged
+            .ObserveOn(_schedulerProvider.MainThread)
+            .Subscribe(LoadCurrentSettings);
+
+        // Track changes
+        this.WhenAnyValue(x => x.LogFilePath).CombineLatest(this.WhenAnyValue(x => x.UpdateInterval),
+                this.WhenAnyValue(x => x.AutoStartMonitoring),
+                this.WhenAnyValue(x => x.MaxLogEntries),
+                this.WhenAnyValue(x => x.ShowErrorNotifications),
+                this.WhenAnyValue(x => x.ShowWarningNotifications),
+                this.WhenAnyValue(x => x.DefaultExportPath),
+                this.WhenAnyValue(x => x.IncludeTimestamps),
+                this.WhenAnyValue(x => x.DateFormat),
+                (a, b, c, d, e, f, g, h, i) => true)
+            .Skip(1) // Skip initial values
+            .Subscribe(_ => HasChanges = true);
+
+        // Create commands
+        var canSave = this.WhenAnyValue(x => x.HasChanges, x => x.IsSaving,
+            (hasChanges, isSaving) => hasChanges && !isSaving);
+        SaveCommand = ReactiveCommand.CreateFromTask(SaveSettingsAsync, canSave);
+
+        var canCancel = this.WhenAnyValue(x => x.HasChanges, x => x.IsSaving,
+            (hasChanges, isSaving) => hasChanges && !isSaving);
+        CancelCommand = ReactiveCommand.Create(Cancel, canCancel);
+
+        var canReset = this.WhenAnyValue(x => x.IsSaving, isSaving => !isSaving);
+        ResetToDefaultsCommand = ReactiveCommand.CreateFromTask(ResetToDefaultsAsync, canReset);
+
+        BrowseLogFileCommand = ReactiveCommand.CreateFromTask(BrowseLogFileAsync);
+        BrowseExportPathCommand = ReactiveCommand.CreateFromTask(BrowseExportPathAsync);
+
+        // Handle command errors
+        SaveCommand.ThrownExceptions.Subscribe(ex =>
+            _logger.LogError($"Error saving settings: {ex.Message}", ex));
+    }
+
     [Reactive] public string LogFilePath { get; set; } = string.Empty;
     [Reactive] public int UpdateInterval { get; set; } = 1000;
     [Reactive] public bool AutoStartMonitoring { get; set; }
@@ -31,52 +81,6 @@ public class SettingsViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ResetToDefaultsCommand { get; }
     public ReactiveCommand<Unit, Unit> BrowseLogFileCommand { get; }
     public ReactiveCommand<Unit, Unit> BrowseExportPathCommand { get; }
-
-    public SettingsViewModel(ISettingsService settingsService, IStorageProvider? storageProvider = null)
-    {
-        _settingsService = settingsService;
-        _storageProvider = storageProvider;
-
-        // Load current settings
-        LoadCurrentSettings(_settingsService.Settings);
-
-        // Subscribe to settings changes (hot-reload)
-        _settingsService.SettingsChanged
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(LoadCurrentSettings);
-
-        // Track changes
-        Observable.CombineLatest(
-            this.WhenAnyValue(x => x.LogFilePath),
-            this.WhenAnyValue(x => x.UpdateInterval),
-            this.WhenAnyValue(x => x.AutoStartMonitoring),
-            this.WhenAnyValue(x => x.MaxLogEntries),
-            this.WhenAnyValue(x => x.ShowErrorNotifications),
-            this.WhenAnyValue(x => x.ShowWarningNotifications),
-            this.WhenAnyValue(x => x.DefaultExportPath),
-            this.WhenAnyValue(x => x.IncludeTimestamps),
-            this.WhenAnyValue(x => x.DateFormat),
-            (a, b, c, d, e, f, g, h, i) => true)
-            .Skip(1) // Skip initial values
-            .Subscribe(_ => HasChanges = true);
-
-        // Create commands
-        var canSave = this.WhenAnyValue(x => x.HasChanges, x => !x.IsSaving, (hasChanges, notSaving) => hasChanges && notSaving);
-        SaveCommand = ReactiveCommand.CreateFromTask(SaveSettingsAsync, canSave);
-
-        var canCancel = this.WhenAnyValue(x => x.HasChanges, x => !x.IsSaving, (hasChanges, notSaving) => hasChanges && notSaving);
-        CancelCommand = ReactiveCommand.Create(Cancel, canCancel);
-
-        var canReset = this.WhenAnyValue(x => x.IsSaving, saving => !saving);
-        ResetToDefaultsCommand = ReactiveCommand.CreateFromTask(ResetToDefaultsAsync, canReset);
-
-        BrowseLogFileCommand = ReactiveCommand.CreateFromTask(BrowseLogFileAsync);
-        BrowseExportPathCommand = ReactiveCommand.CreateFromTask(BrowseExportPathAsync);
-
-        // Handle command errors
-        SaveCommand.ThrownExceptions.Subscribe(ex => 
-            Console.WriteLine($"Error saving settings: {ex.Message}"));
-    }
 
     private void LoadCurrentSettings(AppSettings settings)
     {
@@ -144,7 +148,10 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task BrowseLogFileAsync()
     {
-        if (_storageProvider == null) return;
+        if (_storageProvider == null)
+        {
+            return;
+        }
 
         var options = new FilePickerOpenOptions
         {
@@ -152,10 +159,7 @@ public class SettingsViewModel : ViewModelBase
             AllowMultiple = false,
             FileTypeFilter = new[]
             {
-                new FilePickerFileType("Log Files")
-                {
-                    Patterns = new[] { "*.log", "*.txt" }
-                },
+                new FilePickerFileType("Log Files") { Patterns = new[] { "*.log", "*.txt" } },
                 FilePickerFileTypes.All
             }
         };
@@ -169,13 +173,12 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task BrowseExportPathAsync()
     {
-        if (_storageProvider == null) return;
-
-        var options = new FolderPickerOpenOptions
+        if (_storageProvider == null)
         {
-            Title = "Select Export Directory",
-            AllowMultiple = false
-        };
+            return;
+        }
+
+        var options = new FolderPickerOpenOptions { Title = "Select Export Directory", AllowMultiple = false };
 
         var result = await _storageProvider.OpenFolderPickerAsync(options);
         if (result.Count > 0)

@@ -5,21 +5,18 @@ using PapyrusMonitor.Core.Interfaces;
 namespace PapyrusMonitor.Core.Services;
 
 /// <summary>
-/// Implementation of IFileTailReader that provides efficient tail-like reading of files.
-/// 
-/// This class tracks the current position in a file and only reads new content that has
-/// been appended since the last read, making it efficient for monitoring large log files.
+///     Implementation of IFileTailReader that provides efficient tail-like reading of files.
+///     This class tracks the current position in a file and only reads new content that has
+///     been appended since the last read, making it efficient for monitoring large log files.
 /// </summary>
 public class FileTailReader : IFileTailReader
 {
     private readonly IFileSystem _fileSystem;
-    private long _currentPosition;
-    private string? _filePath;
-    private DateTime _lastModifiedTime;
     private bool _disposed;
+    private DateTime _lastModifiedTime;
 
     /// <summary>
-    /// Initializes a new instance of the FileTailReader class.
+    ///     Initializes a new instance of the FileTailReader class.
     /// </summary>
     /// <param name="fileSystem">File system abstraction for testability</param>
     public FileTailReader(IFileSystem fileSystem)
@@ -28,92 +25,105 @@ public class FileTailReader : IFileTailReader
     }
 
     /// <summary>
-    /// Gets the current position in the file (in bytes).
+    ///     Gets the current position in the file (in bytes).
     /// </summary>
-    public long CurrentPosition => _currentPosition;
+    public long CurrentPosition { get; private set; }
 
     /// <summary>
-    /// Gets the path of the file being tailed.
+    ///     Gets the path of the file being tailed.
     /// </summary>
-    public string? FilePath => _filePath;
+    public string? FilePath { get; private set; }
 
     /// <summary>
-    /// Initializes the tail reader for the specified file.
+    ///     Initializes the tail reader for the specified file.
     /// </summary>
     /// <param name="filePath">Path to the file to tail</param>
     /// <param name="startFromEnd">If true, starts reading from the end of the file; if false, starts from the beginning</param>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when initialization is finished</returns>
-    public async Task InitializeAsync(string filePath, bool startFromEnd = false, CancellationToken cancellationToken = default)
+    public async Task InitializeAsync(string filePath, bool startFromEnd = false,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
-
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(FileTailReader));
-
-        _filePath = filePath;
-
-        if (_fileSystem.File.Exists(filePath))
         {
-            var fileInfo = _fileSystem.FileInfo.New(filePath);
-            _lastModifiedTime = fileInfo.LastWriteTime;
+            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        }
 
-            if (startFromEnd)
+        if (!_disposed)
+        {
+            FilePath = filePath;
+
+            if (_fileSystem.File.Exists(filePath))
             {
-                _currentPosition = fileInfo.Length;
+                var fileInfo = _fileSystem.FileInfo.New(filePath);
+                _lastModifiedTime = fileInfo.LastWriteTime;
+
+                if (startFromEnd)
+                {
+                    CurrentPosition = fileInfo.Length;
+                }
+                else
+                {
+                    CurrentPosition = 0;
+                }
             }
             else
             {
-                _currentPosition = 0;
+                CurrentPosition = 0;
+                _lastModifiedTime = DateTime.MinValue;
             }
+
+            await Task.CompletedTask;
         }
         else
         {
-            _currentPosition = 0;
-            _lastModifiedTime = DateTime.MinValue;
+            throw new ObjectDisposedException(nameof(FileTailReader));
         }
-
-        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Reads any new lines that have been added to the file since the last read.
+    ///     Reads any new lines that have been added to the file since the last read.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A collection of new lines, or empty if no new content</returns>
     public async Task<IEnumerable<string>> ReadNewLinesAsync(CancellationToken cancellationToken = default)
     {
-        if (_disposed || string.IsNullOrEmpty(_filePath))
-            return Enumerable.Empty<string>();
+        if (_disposed || string.IsNullOrEmpty(FilePath))
+        {
+            return [];
+        }
 
         try
         {
-            if (!_fileSystem.File.Exists(_filePath))
-                return Enumerable.Empty<string>();
+            if (!_fileSystem.File.Exists(FilePath))
+            {
+                return [];
+            }
 
-            var fileInfo = _fileSystem.FileInfo.New(_filePath);
+            var fileInfo = _fileSystem.FileInfo.New(FilePath);
             var currentLength = fileInfo.Length;
 
             // Check if file was truncated or recreated
-            if (currentLength < _currentPosition)
+            if (currentLength < CurrentPosition)
             {
                 await HandleFileRecreationAsync(cancellationToken);
                 return await ReadNewLinesAsync(cancellationToken);
             }
 
             // No new content
-            if (currentLength == _currentPosition)
-                return Enumerable.Empty<string>();
+            if (currentLength == CurrentPosition)
+            {
+                return [];
+            }
 
             var newLines = new List<string>();
 
             // Read the new content
-            using var stream = _fileSystem.File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            stream.Seek(_currentPosition, SeekOrigin.Begin);
+            using var stream = _fileSystem.File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            stream.Seek(CurrentPosition, SeekOrigin.Begin);
 
-            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-            
+            using var reader = new StreamReader(stream, Encoding.UTF8, true);
+
             string? line;
             while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
             {
@@ -121,7 +131,7 @@ public class FileTailReader : IFileTailReader
             }
 
             // Update position and timestamp
-            _currentPosition = stream.Position;
+            CurrentPosition = stream.Position;
             _lastModifiedTime = fileInfo.LastWriteTime;
 
             return newLines;
@@ -139,43 +149,47 @@ public class FileTailReader : IFileTailReader
     }
 
     /// <summary>
-    /// Checks if the file has been modified since the last read.
+    ///     Checks if the file has been modified since the last read.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>True if the file has new content to read</returns>
-    public async Task<bool> HasNewContentAsync(CancellationToken cancellationToken = default)
+    public Task<bool> HasNewContentAsync(CancellationToken cancellationToken = default)
     {
-        if (_disposed || string.IsNullOrEmpty(_filePath))
-            return false;
+        if (_disposed || string.IsNullOrEmpty(FilePath))
+        {
+            return Task.FromResult(false);
+        }
 
         try
         {
-            if (!_fileSystem.File.Exists(_filePath))
-                return false;
+            if (!_fileSystem.File.Exists(FilePath))
+            {
+                return Task.FromResult(false);
+            }
 
-            var fileInfo = _fileSystem.FileInfo.New(_filePath);
-            
+            var fileInfo = _fileSystem.FileInfo.New(FilePath);
+
             // Check if file size changed or was modified
-            return fileInfo.Length != _currentPosition || fileInfo.LastWriteTime > _lastModifiedTime;
+            return Task.FromResult(fileInfo.Length != CurrentPosition || fileInfo.LastWriteTime > _lastModifiedTime);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 
     /// <summary>
-    /// Resets the position to the beginning of the file.
+    ///     Resets the position to the beginning of the file.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when the reset is finished</returns>
     public Task ResetPositionAsync(CancellationToken cancellationToken = default)
     {
-        _currentPosition = 0;
-        
-        if (!string.IsNullOrEmpty(_filePath) && _fileSystem.File.Exists(_filePath))
+        CurrentPosition = 0;
+
+        if (!string.IsNullOrEmpty(FilePath) && _fileSystem.File.Exists(FilePath))
         {
-            var fileInfo = _fileSystem.FileInfo.New(_filePath);
+            var fileInfo = _fileSystem.FileInfo.New(FilePath);
             _lastModifiedTime = fileInfo.LastWriteTime;
         }
         else
@@ -187,26 +201,30 @@ public class FileTailReader : IFileTailReader
     }
 
     /// <summary>
-    /// Handles file recreation scenarios (when the log file is deleted and recreated).
+    ///     Handles file recreation scenarios (when the log file is deleted and recreated).
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>A task that completes when the file recreation is handled</returns>
     public async Task HandleFileRecreationAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(_filePath))
+        if (string.IsNullOrEmpty(FilePath))
+        {
             return;
+        }
 
         // Reset position to beginning since it's a new file
         await ResetPositionAsync(cancellationToken);
     }
 
     /// <summary>
-    /// Disposes the file tail reader and releases all resources.
+    ///     Disposes the file tail reader and releases all resources.
     /// </summary>
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         _disposed = true;
         GC.SuppressFinalize(this);

@@ -1,4 +1,3 @@
-using System;
 using Avalonia.Media;
 using FluentAssertions;
 using Microsoft.Reactive.Testing;
@@ -45,11 +44,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 10,
-            Stacks: 20,
-            Warnings: 5,
-            Errors: 2,
-            Ratio: 0.5);
+            10,
+            20,
+            5,
+            2,
+            0.5);
 
         // Act
         viewModel.UpdateStats(stats);
@@ -71,11 +70,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 1,
-            Stacks: 10,
-            Warnings: 0,
-            Errors: 0,
-            Ratio: 0.1); // Below warning threshold
+            1,
+            10,
+            0,
+            0,
+            0.1); // Below warning threshold
 
         // Act
         viewModel.UpdateStats(stats);
@@ -93,11 +92,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 5,
-            Stacks: 10,
-            Warnings: 1,
-            Errors: 0,
-            Ratio: 0.5); // At warning threshold
+            5,
+            10,
+            1,
+            0,
+            0.5); // At warning threshold
 
         // Act
         viewModel.UpdateStats(stats);
@@ -115,11 +114,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 8,
-            Stacks: 10,
-            Warnings: 0,
-            Errors: 1,
-            Ratio: 0.8); // At error threshold
+            8,
+            10,
+            0,
+            1,
+            0.8); // At error threshold
 
         // Act
         viewModel.UpdateStats(stats);
@@ -137,11 +136,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 9,
-            Stacks: 10,
-            Warnings: 0,
-            Errors: 0,
-            Ratio: 0.9); // Above error threshold
+            9,
+            10,
+            0,
+            0,
+            0.9); // Above error threshold
 
         // Act
         viewModel.UpdateStats(stats);
@@ -159,11 +158,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now.AddSeconds(-30),
-            Dumps: 0,
-            Stacks: 0,
-            Warnings: 0,
-            Errors: 0,
-            Ratio: 0);
+            0,
+            0,
+            0,
+            0,
+            0);
 
         // Act
         viewModel.UpdateStats(stats);
@@ -179,11 +178,11 @@ public class StatisticsViewModelTests
         var viewModel = new StatisticsViewModel();
         var stats = new PapyrusStats(
             DateTime.Now.AddMinutes(-5),
-            Dumps: 0,
-            Stacks: 0,
-            Warnings: 0,
-            Errors: 0,
-            Ratio: 0);
+            0,
+            0,
+            0,
+            0,
+            0);
 
         // Act
         viewModel.UpdateStats(stats);
@@ -200,11 +199,11 @@ public class StatisticsViewModelTests
         var timestamp = DateTime.Now.AddHours(-2);
         var stats = new PapyrusStats(
             timestamp,
-            Dumps: 0,
-            Stacks: 0,
-            Warnings: 0,
-            Errors: 0,
-            Ratio: 0);
+            0,
+            0,
+            0,
+            0,
+            0);
 
         // Act
         viewModel.UpdateStats(stats);
@@ -223,12 +222,12 @@ public class StatisticsViewModelTests
             var fixedTime = DateTime.Now.AddSeconds(-2); // Stats from 2 seconds ago
             var stats = new PapyrusStats(
                 fixedTime,
-                Dumps: 0,
-                Stacks: 0,
-                Warnings: 0,
-                Errors: 0,
-                Ratio: 0);
-            
+                0,
+                0,
+                0,
+                0,
+                0);
+
             viewModel.UpdateStats(stats);
             viewModel.Activator.Activate();
 
@@ -250,16 +249,18 @@ public class StatisticsViewModelTests
         viewModel.PropertyChanged += (sender, args) =>
         {
             if (args.PropertyName != null)
+            {
                 propertyNames.Add(args.PropertyName);
+            }
         };
 
         var stats = new PapyrusStats(
             DateTime.Now,
-            Dumps: 10,
-            Stacks: 20,
-            Warnings: 5,
-            Errors: 2,
-            Ratio: 0.5);
+            10,
+            20,
+            5,
+            2,
+            0.5);
 
         // Act
         viewModel.UpdateStats(stats);

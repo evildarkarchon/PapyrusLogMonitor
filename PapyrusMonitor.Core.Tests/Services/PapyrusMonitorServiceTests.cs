@@ -1,5 +1,4 @@
 using System.IO.Abstractions.TestingHelpers;
-using System.Reactive.Linq;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
@@ -8,12 +7,12 @@ namespace PapyrusMonitor.Core.Tests.Services;
 
 public class PapyrusMonitorServiceTests : IDisposable
 {
-    private readonly MockFileSystem _fileSystem;
-    private readonly PapyrusLogParser _logParser;
-    private readonly FileWatcher _fileWatcher;
-    private readonly FileTailReader _tailReader;
     private readonly MonitoringConfiguration _configuration;
+    private readonly MockFileSystem _fileSystem;
+    private readonly FileWatcher _fileWatcher;
+    private readonly PapyrusLogParser _logParser;
     private readonly PapyrusMonitorService _monitorService;
+    private readonly FileTailReader _tailReader;
 
     public PapyrusMonitorServiceTests()
     {
@@ -27,6 +26,23 @@ public class PapyrusMonitorServiceTests : IDisposable
             UpdateIntervalMs = 100
         };
         _monitorService = new PapyrusMonitorService(_logParser, _fileWatcher, _tailReader, _configuration);
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _monitorService?.Dispose();
+            _fileWatcher?.Dispose();
+            _tailReader?.Dispose();
+
+            // Give a small delay to ensure async operations complete
+            Thread.Sleep(50);
+        }
+        catch
+        {
+            // Ignore disposal exceptions in tests
+        }
     }
 
     [Fact]
@@ -159,8 +175,7 @@ Script error: Test error";
 
         var newConfig = new MonitoringConfiguration(@"C:\test\new_papyrus.log")
         {
-            UseFileWatcher = false,
-            UpdateIntervalMs = 200
+            UseFileWatcher = false, UpdateIntervalMs = 200
         };
 
         // Act
@@ -183,22 +198,5 @@ Script error: Test error";
 
         // Assert
         Assert.False(_monitorService.IsMonitoring);
-    }
-
-    public void Dispose()
-    {
-        try
-        {
-            _monitorService?.Dispose();
-            _fileWatcher?.Dispose();
-            _tailReader?.Dispose();
-            
-            // Give a small delay to ensure async operations complete
-            Thread.Sleep(50);
-        }
-        catch
-        {
-            // Ignore disposal exceptions in tests
-        }
     }
 }

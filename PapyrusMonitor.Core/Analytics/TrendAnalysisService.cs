@@ -1,11 +1,10 @@
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using PapyrusMonitor.Core.Models;
 
 namespace PapyrusMonitor.Core.Analytics;
 
 /// <summary>
-/// Implementation of trend analysis service
+///     Implementation of trend analysis service
 /// </summary>
 public class TrendAnalysisService : ITrendAnalysisService
 {
@@ -29,35 +28,20 @@ public class TrendAnalysisService : ITrendAnalysisService
         _logger.LogInformation("Analyzing trends for {Count} data points", statistics.Count);
 
         // Extract data points for each metric
-        var dumpsPoints = statistics.Select(s => new TrendDataPoint 
-        { 
-            Timestamp = s.Timestamp, 
-            Value = s.Dumps 
-        }).ToList();
-        
-        var stacksPoints = statistics.Select(s => new TrendDataPoint 
-        { 
-            Timestamp = s.Timestamp, 
-            Value = s.Stacks 
-        }).ToList();
-        
-        var warningsPoints = statistics.Select(s => new TrendDataPoint 
-        { 
-            Timestamp = s.Timestamp, 
-            Value = s.Warnings 
-        }).ToList();
-        
-        var errorsPoints = statistics.Select(s => new TrendDataPoint 
-        { 
-            Timestamp = s.Timestamp, 
-            Value = s.Errors 
-        }).ToList();
-        
-        var ratioPoints = statistics.Select(s => new TrendDataPoint 
-        { 
-            Timestamp = s.Timestamp, 
-            Value = s.Ratio 
-        }).ToList();
+        var dumpsPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Dumps })
+            .ToList();
+
+        var stacksPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Stacks })
+            .ToList();
+
+        var warningsPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Warnings })
+            .ToList();
+
+        var errorsPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Errors })
+            .ToList();
+
+        var ratioPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Ratio })
+            .ToList();
 
         // Calculate trends for each metric in parallel
         var tasks = new[]
@@ -71,11 +55,7 @@ public class TrendAnalysisService : ITrendAnalysisService
 
         var results = await Task.WhenAll(tasks);
 
-        var timeRange = new TimeRange
-        {
-            Start = statistics.First().Timestamp,
-            End = statistics.Last().Timestamp
-        };
+        var timeRange = new TimeRange { Start = statistics.First().Timestamp, End = statistics.Last().Timestamp };
 
         return new TrendAnalysisResult
         {
@@ -106,10 +86,7 @@ public class TrendAnalysisService : ITrendAnalysisService
 
             return new TrendData
             {
-                DataPoints = points,
-                MovingAverage = movingAverage,
-                TrendLine = trendLine,
-                Summary = summary
+                DataPoints = points, MovingAverage = movingAverage, TrendLine = trendLine, Summary = summary
             };
         });
     }
@@ -119,25 +96,21 @@ public class TrendAnalysisService : ITrendAnalysisService
         int period)
     {
         var movingAverage = new List<TrendDataPoint>();
-        
-        for (int i = 0; i < points.Count; i++)
+
+        for (var i = 0; i < points.Count; i++)
         {
-            int startIndex = Math.Max(0, i - period + 1);
-            int count = i - startIndex + 1;
-            
+            var startIndex = Math.Max(0, i - period + 1);
+            var count = i - startIndex + 1;
+
             double sum = 0;
-            for (int j = startIndex; j <= i; j++)
+            for (var j = startIndex; j <= i; j++)
             {
                 sum += points[j].Value;
             }
-            
-            movingAverage.Add(new TrendDataPoint
-            {
-                Timestamp = points[i].Timestamp,
-                Value = sum / count
-            });
+
+            movingAverage.Add(new TrendDataPoint { Timestamp = points[i].Timestamp, Value = sum / count });
         }
-        
+
         return movingAverage;
     }
 
@@ -155,40 +128,39 @@ public class TrendAnalysisService : ITrendAnalysisService
         var yValues = points.Select(p => p.Value).ToArray();
 
         // Calculate means
-        double xMean = xValues.Average();
-        double yMean = yValues.Average();
+        var xMean = xValues.Average();
+        var yMean = yValues.Average();
 
         // Calculate slope and intercept
         double numerator = 0;
         double denominator = 0;
-        
-        for (int i = 0; i < xValues.Length; i++)
+
+        for (var i = 0; i < xValues.Length; i++)
         {
             numerator += (xValues[i] - xMean) * (yValues[i] - yMean);
             denominator += Math.Pow(xValues[i] - xMean, 2);
         }
 
-        double slope = denominator != 0 ? numerator / denominator : 0;
-        double intercept = yMean - slope * xMean;
+        var slope = denominator != 0 ? numerator / denominator : 0;
+        var intercept = yMean - slope * xMean;
 
         // Calculate R-squared
         double ssTotal = 0;
         double ssResidual = 0;
-        
-        for (int i = 0; i < yValues.Length; i++)
+
+        for (var i = 0; i < yValues.Length; i++)
         {
-            double yPredicted = slope * xValues[i] + intercept;
+            var yPredicted = slope * xValues[i] + intercept;
             ssTotal += Math.Pow(yValues[i] - yMean, 2);
             ssResidual += Math.Pow(yValues[i] - yPredicted, 2);
         }
 
-        double rSquared = ssTotal != 0 ? 1 - (ssResidual / ssTotal) : 0;
+        var rSquared = ssTotal != 0 ? 1 - ssResidual / ssTotal : 0;
 
         // Generate trend line points
         var trendLine = points.Select((p, i) => new TrendDataPoint
         {
-            Timestamp = p.Timestamp,
-            Value = slope * xValues[i] + intercept
+            Timestamp = p.Timestamp, Value = slope * xValues[i] + intercept
         }).ToList();
 
         return (trendLine, slope, rSquared);
@@ -200,14 +172,14 @@ public class TrendAnalysisService : ITrendAnalysisService
         double rSquared)
     {
         var values = points.Select(p => p.Value).ToList();
-        
-        double min = values.Min();
-        double max = values.Max();
-        double average = values.Average();
-        
+
+        var min = values.Min();
+        var max = values.Max();
+        var average = values.Average();
+
         // Calculate standard deviation
-        double sumSquaredDiff = values.Sum(v => Math.Pow(v - average, 2));
-        double standardDeviation = Math.Sqrt(sumSquaredDiff / values.Count);
+        var sumSquaredDiff = values.Sum(v => Math.Pow(v - average, 2));
+        var standardDeviation = Math.Sqrt(sumSquaredDiff / values.Count);
 
         return new TrendSummary
         {

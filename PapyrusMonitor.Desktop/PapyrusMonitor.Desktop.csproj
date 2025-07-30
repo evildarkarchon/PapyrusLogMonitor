@@ -12,12 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.2"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7"/>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PapyrusMonitor.Avalonia\PapyrusMonitor.Avalonia.csproj" />
+    <ProjectReference Include="..\PapyrusMonitor.Avalonia\PapyrusMonitor.Avalonia.csproj"/>
   </ItemGroup>
 </Project>

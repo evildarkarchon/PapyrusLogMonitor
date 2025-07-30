@@ -7,18 +7,18 @@ using PapyrusMonitor.Core.Models;
 namespace PapyrusMonitor.Core.Services;
 
 /// <summary>
-/// Implementation of session history tracking service
+///     Implementation of session history tracking service
 /// </summary>
 public class SessionHistoryService : ISessionHistoryService
 {
     private readonly ILogger<SessionHistoryService> _logger;
+    private readonly object _sessionLock = new();
     private readonly ISettingsService _settingsService;
     private readonly ConcurrentBag<PapyrusStats> _statistics;
-    private readonly object _sessionLock = new();
-    
-    private DateTime? _sessionStartTime;
-    private DateTime? _sessionEndTime;
     private bool _isSessionActive;
+    private DateTime? _sessionEndTime;
+
+    private DateTime? _sessionStartTime;
 
     public SessionHistoryService(ILogger<SessionHistoryService> logger, ISettingsService settingsService)
     {
@@ -74,7 +74,7 @@ public class SessionHistoryService : ISessionHistoryService
             _sessionEndTime = null;
             _isSessionActive = true;
             _statistics.Clear();
-            
+
             _logger.LogInformation("Started new monitoring session at {StartTime}", _sessionStartTime);
         }
     }
@@ -91,7 +91,7 @@ public class SessionHistoryService : ISessionHistoryService
 
             _sessionEndTime = DateTime.Now;
             _isSessionActive = false;
-            
+
             _logger.LogInformation("Ended monitoring session at {EndTime}", _sessionEndTime);
         }
     }
@@ -107,20 +107,20 @@ public class SessionHistoryService : ISessionHistoryService
         }
 
         _statistics.Add(stats);
-        
+
         // Trim history if it exceeds the maximum
         var maxEntries = _settingsService.Settings.MaxLogEntries;
         if (_statistics.Count > maxEntries)
         {
             var orderedStats = _statistics.OrderBy(s => s.Timestamp).ToList();
             var toKeep = orderedStats.Skip(orderedStats.Count - maxEntries).ToList();
-            
+
             _statistics.Clear();
             foreach (var stat in toKeep)
             {
                 _statistics.Add(stat);
             }
-            
+
             _logger.LogDebug("Trimmed session history to {MaxEntries} entries", maxEntries);
         }
     }
@@ -145,7 +145,7 @@ public class SessionHistoryService : ISessionHistoryService
             {
                 return null;
             }
-            
+
             startTime = _sessionStartTime.Value;
             endTime = _sessionEndTime ?? DateTime.Now;
         }

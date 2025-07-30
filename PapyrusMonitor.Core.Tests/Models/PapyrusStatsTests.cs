@@ -10,7 +10,7 @@ public class PapyrusStatsTests
         // Arrange
         var timestamp1 = DateTime.Now;
         var timestamp2 = timestamp1.AddMinutes(1);
-        
+
         var stats1 = new PapyrusStats(timestamp1, 5, 10, 2, 1, 0.5);
         var stats2 = new PapyrusStats(timestamp2, 5, 10, 2, 1, 0.6); // Different timestamp and ratio
 
@@ -36,7 +36,7 @@ public class PapyrusStatsTests
         // Arrange
         var timestamp1 = DateTime.Now;
         var timestamp2 = timestamp1.AddHours(1);
-        
+
         var stats1 = new PapyrusStats(timestamp1, 5, 10, 2, 1, 0.5);
         var stats2 = new PapyrusStats(timestamp2, 5, 10, 2, 1, 0.8); // Different timestamp and ratio
 

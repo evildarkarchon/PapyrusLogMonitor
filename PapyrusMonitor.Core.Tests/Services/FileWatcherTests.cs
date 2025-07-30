@@ -1,6 +1,4 @@
 using System.IO.Abstractions.TestingHelpers;
-using System.Reactive.Linq;
-using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Services;
 
 namespace PapyrusMonitor.Core.Tests.Services;
@@ -14,6 +12,11 @@ public class FileWatcherTests : IDisposable
     {
         _fileSystem = new MockFileSystem();
         _fileWatcher = new FileWatcher(_fileSystem);
+    }
+
+    public void Dispose()
+    {
+        _fileWatcher?.Dispose();
     }
 
     [Fact]
@@ -31,8 +34,10 @@ public class FileWatcherTests : IDisposable
         const string filePath = @"C:\test\log.txt";
         _fileSystem.AddFile(filePath, new MockFileData("test content"));
 
-        var errorReceived = false;
-        _fileWatcher.Errors.Subscribe(_ => errorReceived = true);
+        _fileWatcher.Errors.Subscribe(_ =>
+        {
+            /* Expected due to MockFileSystem limitations */
+        });
 
         // Act
         await _fileWatcher.StartWatchingAsync(filePath);
@@ -92,10 +97,5 @@ public class FileWatcherTests : IDisposable
         // If we get here without exceptions, the test passes
         // MockFileSystem limitations prevent us from testing the full behavior
         Assert.True(true);
-    }
-
-    public void Dispose()
-    {
-        _fileWatcher?.Dispose();
     }
 }

@@ -61,10 +61,7 @@ public class MonitoringConfigurationTests
     public void Validate_InvalidUpdateInterval_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            UpdateIntervalMs = 0
-        };
+        var config = new MonitoringConfiguration { UpdateIntervalMs = 0 };
 
         // Act
         var errors = config.Validate();
@@ -77,10 +74,7 @@ public class MonitoringConfigurationTests
     public void Validate_InvalidMaxLogEntries_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            MaxLogEntries = -1
-        };
+        var config = new MonitoringConfiguration { MaxLogEntries = -1 };
 
         // Act
         var errors = config.Validate();
@@ -93,10 +87,7 @@ public class MonitoringConfigurationTests
     public void Validate_NegativeWarningThreshold_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            WarningRatioThreshold = -0.1
-        };
+        var config = new MonitoringConfiguration { WarningRatioThreshold = -0.1 };
 
         // Act
         var errors = config.Validate();
@@ -109,10 +100,7 @@ public class MonitoringConfigurationTests
     public void Validate_NegativeErrorThreshold_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            ErrorRatioThreshold = -0.1
-        };
+        var config = new MonitoringConfiguration { ErrorRatioThreshold = -0.1 };
 
         // Act
         var errors = config.Validate();
@@ -125,11 +113,7 @@ public class MonitoringConfigurationTests
     public void Validate_ErrorThresholdLessThanWarningThreshold_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            WarningRatioThreshold = 0.8,
-            ErrorRatioThreshold = 0.5
-        };
+        var config = new MonitoringConfiguration { WarningRatioThreshold = 0.8, ErrorRatioThreshold = 0.5 };
 
         // Act
         var errors = config.Validate();
@@ -142,10 +126,7 @@ public class MonitoringConfigurationTests
     public void Validate_EmptyFallbackEncoding_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            FallbackEncoding = ""
-        };
+        var config = new MonitoringConfiguration { FallbackEncoding = "" };
 
         // Act
         var errors = config.Validate();
@@ -158,10 +139,7 @@ public class MonitoringConfigurationTests
     public void Validate_NullFallbackEncoding_ReturnsError()
     {
         // Arrange
-        var config = new MonitoringConfiguration
-        {
-            FallbackEncoding = null!
-        };
+        var config = new MonitoringConfiguration { FallbackEncoding = null! };
 
         // Act
         var errors = config.Validate();

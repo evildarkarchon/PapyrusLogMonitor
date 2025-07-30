@@ -2,9 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:PapyrusLogMonitor.ViewModels"
+             xmlns:vm="using:PapyrusMonitor.Avalonia.ViewModels"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
-             x:Class="PapyrusLogMonitor.Views.SettingsView"
+             x:Class="PapyrusMonitor.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
     
     <ScrollViewer Padding="20">

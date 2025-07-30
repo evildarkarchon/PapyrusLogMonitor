@@ -1,0 +1,173 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PapyrusMonitor.Avalonia.ViewModels"
+             xmlns:oxy="http://oxyplot.org/avalonia"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="PapyrusMonitor.Avalonia.Views.TrendAnalysisView"
+             x:DataType="vm:TrendAnalysisViewModel">
+    
+    <Design.DataContext>
+        <vm:TrendAnalysisViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="10">
+            <TextBlock Text="Trend Analysis"
+                       Classes="h1"
+                       HorizontalAlignment="Center" />
+            
+            <TextBlock Text="{Binding StatusMessage}"
+                       FontSize="14"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                       HorizontalAlignment="Center"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+
+        <!-- Controls -->
+        <Border Grid.Row="1" 
+                Margin="0,15,0,15"
+                Padding="15"
+                Classes="card">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                <TextBlock Text="Moving Average Period:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0" />
+                
+                <NumericUpDown Grid.Column="1"
+                               Value="{Binding MovingAveragePeriod}"
+                               Minimum="2"
+                               Maximum="20"
+                               Increment="1"
+                               Width="100"
+                               IsEnabled="{Binding !IsLoading}" />
+                
+                <!-- Spacer -->
+                <Panel Grid.Column="2" />
+                
+                <Button Grid.Column="3"
+                        Command="{Binding RefreshCommand}"
+                        Width="100"
+                        Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="🔄" FontSize="14" />
+                        <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                
+                <Button Grid.Column="4"
+                        Command="{Binding CloseCommand}"
+                        Width="80">
+                    Close
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Charts Container -->
+        <ScrollViewer Grid.Row="2"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid IsVisible="{Binding HasData}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="300" />
+                    <RowDefinition Height="300" />
+                    <RowDefinition Height="300" />
+                    <RowDefinition Height="300" />
+                    <RowDefinition Height="300" />
+                </Grid.RowDefinitions>
+                
+                <!-- Dumps Chart -->
+                <Border Grid.Row="0" Classes="chart-container" Margin="0,0,0,15">
+                    <oxy:PlotView Model="{Binding DumpsPlotModel}" />
+                </Border>
+                
+                <!-- Stacks Chart -->
+                <Border Grid.Row="1" Classes="chart-container" Margin="0,0,0,15">
+                    <oxy:PlotView Model="{Binding StacksPlotModel}" />
+                </Border>
+                
+                <!-- Warnings Chart -->
+                <Border Grid.Row="2" Classes="chart-container" Margin="0,0,0,15">
+                    <oxy:PlotView Model="{Binding WarningsPlotModel}" />
+                </Border>
+                
+                <!-- Errors Chart -->
+                <Border Grid.Row="3" Classes="chart-container" Margin="0,0,0,15">
+                    <oxy:PlotView Model="{Binding ErrorsPlotModel}" />
+                </Border>
+                
+                <!-- Ratio Chart -->
+                <Border Grid.Row="4" Classes="chart-container">
+                    <oxy:PlotView Model="{Binding RatioPlotModel}" />
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Loading Indicator -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding IsLoading}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="15">
+                <ProgressBar IsIndeterminate="True"
+                             Width="200"
+                             Height="4" />
+                <TextBlock Text="Analyzing trends..."
+                           HorizontalAlignment="Center"
+                           FontSize="14" />
+            </StackPanel>
+        </Border>
+
+        <!-- No Data Message -->
+        <TextBlock Grid.Row="2"
+                   Text="No data available for trend analysis"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                   IsVisible="{Binding !HasData}" />
+
+        <!-- Footer -->
+        <Border Grid.Row="3"
+                Margin="0,15,0,0"
+                Padding="10"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                CornerRadius="4"
+                IsVisible="{Binding CurrentAnalysis, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock FontSize="12"
+                       TextAlignment="Center">
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Analysis Period: {0:yyyy-MM-dd HH:mm:ss} to {1:yyyy-MM-dd HH:mm:ss} ({2:hh\:mm\:ss})">
+                        <Binding Path="CurrentAnalysis.TimeRange.Start" />
+                        <Binding Path="CurrentAnalysis.TimeRange.End" />
+                        <Binding Path="CurrentAnalysis.TimeRange.Duration" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+    </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        
+        <Style Selector="Border.chart-container">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+        
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Light"/>
+        </Style>
+    </UserControl.Styles>
+</UserControl>

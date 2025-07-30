@@ -37,12 +37,14 @@ public partial class App : Application
             var settingsService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Configuration.ISettingsService>();
             var exportService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Export.IExportService>();
             var sessionHistoryService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Services.ISessionHistoryService>();
+            var trendAnalysisService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Analytics.ITrendAnalysisService>();
             
             var mainWindowViewModel = new MainWindowViewModel(
                 papyrusMonitorViewModel,
                 settingsService,
                 exportService,
                 sessionHistoryService,
+                trendAnalysisService,
                 mainWindow.StorageProvider);
             
             mainWindow.DataContext = mainWindowViewModel;

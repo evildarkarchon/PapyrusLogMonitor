@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:PapyrusMonitor.Avalonia.Views"
-        xmlns:pviews="clr-namespace:PapyrusLogMonitor.Views;assembly=PapyrusLogMonitor"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="PapyrusMonitor.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -64,8 +63,54 @@
                                         </Border>
                                         
                                         <!-- Settings Content -->
-                                        <pviews:SettingsView Grid.Row="1"
-                                                             DataContext="{Binding SettingsViewModel}" />
+                                        <views:SettingsView Grid.Row="1"
+                                                            DataContext="{Binding SettingsViewModel}" />
+                                </Grid>
+                        </Border>
+                </Border>
+                
+                <!-- Trend Analysis Overlay -->
+                <Border Background="#80000000"
+                        IsVisible="{Binding ShowTrendAnalysis}"
+                        IsHitTestVisible="{Binding ShowTrendAnalysis}">
+                        <Border Background="{DynamicResource SystemRegionBackgroundBrush}"
+                                CornerRadius="8"
+                                Width="920"
+                                Height="720"
+                                MaxWidth="1200"
+                                MaxHeight="900"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                BoxShadow="0 8 32 0 #40000000">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Trend Analysis Header -->
+                                        <Border Grid.Row="0" 
+                                                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                                                CornerRadius="8,8,0,0"
+                                                Padding="20,15">
+                                                <Grid>
+                                                        <TextBlock Text="Trend Analysis" 
+                                                                   FontSize="20" 
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Left"/>
+                                                        <Button Command="{Binding CloseTrendAnalysisCommand}"
+                                                                HorizontalAlignment="Right"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Padding="8">
+                                                                <TextBlock Text="✕" FontSize="16" />
+                                                        </Button>
+                                                </Grid>
+                                        </Border>
+                                        
+                                        <!-- Trend Analysis Content -->
+                                        <views:TrendAnalysisView Grid.Row="1"
+                                                                DataContext="{Binding TrendAnalysisViewModel}" />
                                 </Grid>
                         </Border>
                 </Border>

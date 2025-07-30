@@ -162,7 +162,7 @@
                 </Button>
 
                 <!-- Settings Button -->
-                <Button Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                <Button Command="{ReflectionBinding $parent[Window].DataContext.ShowSettingsCommand}"
                         Width="125"
                         Height="40">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -172,7 +172,7 @@
                 </Button>
             </StackPanel>
             
-            <!-- Export Buttons -->
+            <!-- Export and Analysis Buttons -->
             <StackPanel Grid.Row="1" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center" 
@@ -183,9 +183,9 @@
                            FontWeight="Medium"
                            Margin="0,0,10,0"/>
                 
-                <Button Command="{Binding DataContext.ExportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                <Button Command="{ReflectionBinding $parent[Window].DataContext.ExportCommand}"
                         CommandParameter="{x:Static export:ExportFormat.Csv}"
-                        IsEnabled="{Binding !DataContext.IsExporting, RelativeSource={RelativeSource AncestorType=Window}}"
+                        IsEnabled="{ReflectionBinding !$parent[Window].DataContext.IsExporting}"
                         Height="35">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <TextBlock Text="📊" FontSize="14" />
@@ -193,13 +193,23 @@
                     </StackPanel>
                 </Button>
                 
-                <Button Command="{Binding DataContext.ExportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                <Button Command="{ReflectionBinding $parent[Window].DataContext.ExportCommand}"
                         CommandParameter="{x:Static export:ExportFormat.Json}"
-                        IsEnabled="{Binding !DataContext.IsExporting, RelativeSource={RelativeSource AncestorType=Window}}"
+                        IsEnabled="{ReflectionBinding !$parent[Window].DataContext.IsExporting}"
                         Height="35">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <TextBlock Text="📋" FontSize="14" />
                         <TextBlock Text="Export JSON" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource SystemControlForegroundBaseLowBrush}" Margin="10,0" />
+                
+                <Button Command="{ReflectionBinding $parent[Window].DataContext.ShowTrendAnalysisCommand}"
+                        Height="35">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="📈" FontSize="14" />
+                        <TextBlock Text="Trend Analysis" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>

@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
+using PapyrusMonitor.Core.Analytics;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Export;
 using PapyrusMonitor.Core.Interfaces;
@@ -35,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<IExportService, ExportService>();
         services.AddSingleton<ISessionHistoryService, SessionHistoryService>();
+        services.AddSingleton<ITrendAnalysisService, TrendAnalysisService>();
         
         // Register configuration
         var config = configuration ?? CreateDefaultConfiguration();

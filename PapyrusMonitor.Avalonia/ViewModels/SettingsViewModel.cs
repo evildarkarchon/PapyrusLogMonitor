@@ -7,7 +7,7 @@ using PapyrusMonitor.Core.Configuration;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
-namespace PapyrusLogMonitor.ViewModels;
+namespace PapyrusMonitor.Avalonia.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {
@@ -46,16 +46,17 @@ public class SettingsViewModel : ViewModelBase
             .Subscribe(LoadCurrentSettings);
 
         // Track changes
-        this.WhenAnyValue(
-                x => x.LogFilePath,
-                x => x.UpdateInterval,
-                x => x.AutoStartMonitoring,
-                x => x.MaxLogEntries,
-                x => x.ShowErrorNotifications,
-                x => x.ShowWarningNotifications,
-                x => x.DefaultExportPath,
-                x => x.IncludeTimestamps,
-                x => x.DateFormat)
+        Observable.CombineLatest(
+            this.WhenAnyValue(x => x.LogFilePath),
+            this.WhenAnyValue(x => x.UpdateInterval),
+            this.WhenAnyValue(x => x.AutoStartMonitoring),
+            this.WhenAnyValue(x => x.MaxLogEntries),
+            this.WhenAnyValue(x => x.ShowErrorNotifications),
+            this.WhenAnyValue(x => x.ShowWarningNotifications),
+            this.WhenAnyValue(x => x.DefaultExportPath),
+            this.WhenAnyValue(x => x.IncludeTimestamps),
+            this.WhenAnyValue(x => x.DateFormat),
+            (a, b, c, d, e, f, g, h, i) => true)
             .Skip(1) // Skip initial values
             .Subscribe(_ => HasChanges = true);
 

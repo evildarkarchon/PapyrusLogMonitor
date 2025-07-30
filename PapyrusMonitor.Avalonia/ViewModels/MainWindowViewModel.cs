@@ -2,7 +2,7 @@ using System;
 using System.Reactive;
 using System.Reactive.Disposables;
 using ReactiveUI;
-using PapyrusLogMonitor.ViewModels;
+using PapyrusMonitor.Core.Analytics;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Export;
 using PapyrusMonitor.Core.Services;
@@ -19,6 +19,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly IExportService _exportService;
     private readonly ISessionHistoryService _sessionHistoryService;
+    private readonly ITrendAnalysisService _trendAnalysisService;
     private readonly IStorageProvider? _storageProvider;
     
     private string _title = "Papyrus Log Monitor";
@@ -31,26 +32,32 @@ public class MainWindowViewModel : ViewModelBase
 
     [Reactive] public bool IsExporting { get; private set; }
     [Reactive] public bool ShowSettings { get; set; }
+    [Reactive] public bool ShowTrendAnalysis { get; set; }
 
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
     public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> CloseSettingsCommand { get; }
     public ReactiveCommand<ExportFormat, Unit> ExportCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowTrendAnalysisCommand { get; }
+    public ReactiveCommand<Unit, Unit> CloseTrendAnalysisCommand { get; }
 
     public PapyrusMonitorViewModel PapyrusMonitorViewModel { get; }
     public SettingsViewModel? SettingsViewModel { get; private set; }
+    public TrendAnalysisViewModel? TrendAnalysisViewModel { get; private set; }
 
     public MainWindowViewModel(
         PapyrusMonitorViewModel papyrusMonitorViewModel,
         ISettingsService settingsService,
         IExportService exportService,
         ISessionHistoryService sessionHistoryService,
+        ITrendAnalysisService trendAnalysisService,
         IStorageProvider? storageProvider = null)
     {
         PapyrusMonitorViewModel = papyrusMonitorViewModel ?? throw new ArgumentNullException(nameof(papyrusMonitorViewModel));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
         _sessionHistoryService = sessionHistoryService ?? throw new ArgumentNullException(nameof(sessionHistoryService));
+        _trendAnalysisService = trendAnalysisService ?? throw new ArgumentNullException(nameof(trendAnalysisService));
         _storageProvider = storageProvider;
         
         ExitCommand = ReactiveCommand.Create(() =>
@@ -74,9 +81,30 @@ public class MainWindowViewModel : ViewModelBase
             (exporting, active) => !exporting && active);
         ExportCommand = ReactiveCommand.CreateFromTask<ExportFormat>(ExportDataAsync, canExport);
 
-        // Handle export errors
+        // Trend analysis commands
+        var canShowTrends = this.WhenAnyValue(x => x._sessionHistoryService.IsSessionActive);
+        ShowTrendAnalysisCommand = ReactiveCommand.CreateFromTask(ShowTrendAnalysisAsync, canShowTrends);
+        
+        CloseTrendAnalysisCommand = ReactiveCommand.Create(() =>
+        {
+            ShowTrendAnalysis = false;
+            TrendAnalysisViewModel = null;
+        });
+
+        // Handle errors
         ExportCommand.ThrownExceptions.Subscribe(ex => 
             Console.WriteLine($"Export failed: {ex.Message}"));
+        ShowTrendAnalysisCommand.ThrownExceptions.Subscribe(ex => 
+            Console.WriteLine($"Failed to show trend analysis: {ex.Message}"));
+    }
+
+    private async Task ShowTrendAnalysisAsync()
+    {
+        TrendAnalysisViewModel = new TrendAnalysisViewModel(_sessionHistoryService, _trendAnalysisService);
+        ShowTrendAnalysis = true;
+        
+        // Trigger initial analysis
+        await TrendAnalysisViewModel.RefreshCommand.Execute();
     }
 
     private async Task ExportDataAsync(ExportFormat format)
@@ -141,7 +169,7 @@ public class MainWindowViewModel : ViewModelBase
         PapyrusMonitorViewModel.Activator.Activate().DisposeWith(disposables);
         
         // Load settings on activation
-        _settingsService.LoadSettingsAsync()
+        Observable.FromAsync(() => _settingsService.LoadSettingsAsync())
             .Subscribe(_ => { }, ex => Console.WriteLine($"Failed to load settings: {ex.Message}"))
             .DisposeWith(disposables);
         

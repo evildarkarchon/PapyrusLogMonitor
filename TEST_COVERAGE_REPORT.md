@@ -95,7 +95,7 @@ This report provides a comprehensive overview of test coverage across the Papyru
 1. ✅ Fixed `MainWindowViewModel` tests to match new constructor
 2. ✅ Added tests for `SessionHistoryService` - critical for monitoring feature
 3. ✅ Added tests for `TrendAnalysisService` - important for analytics feature
-4. ⚠️ `SettingsViewModel` - Cannot test due to ReactiveUI limitation
+4. ✅ Refactored `SettingsViewModel` - improved testability and worked around ReactiveUI negation operator limitation
 
 ### Medium Priority 🟡
 1. Add tests for `TrendCalculator` and `StatisticsAggregator`
@@ -123,7 +123,8 @@ This report provides a comprehensive overview of test coverage across the Papyru
 
 ## Recent Improvements
 
-### January 30, 2025
+### July 29, 2025
+
 - ✅ Fixed PapyrusMonitorViewModel constructor issues
 - ✅ Added comprehensive tests for JsonSettingsService (13 tests)
 - ✅ Added tests for AppSettings model (10 tests)
@@ -132,7 +133,7 @@ This report provides a comprehensive overview of test coverage across the Papyru
 - ✅ Added comprehensive tests for SessionHistoryService (16 tests)
 - ✅ Added comprehensive tests for TrendAnalysisService (12 tests)
 - ✅ Increased total test count from ~80 to 160+
-- ⚠️ Identified SettingsViewModel cannot be tested due to ReactiveUI negation operator limitation
+- ✅ Refactored SettingsViewModel to improve testability
 
 ## Next Steps
 

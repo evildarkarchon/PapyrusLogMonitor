@@ -62,10 +62,7 @@ public class App : Application
                 break;
             }
             case ISingleViewApplicationLifetime singleViewPlatform:
-                singleViewPlatform.MainView = new MainView
-                {
-                    DataContext = ServiceProvider.GetRequiredService<MainViewModel>()
-                };
+                throw new NotSupportedException("Single view platform is not supported. This application requires a desktop environment.");
                 break;
         }
 

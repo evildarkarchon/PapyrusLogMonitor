@@ -23,7 +23,7 @@ public record AppSettings
     ///     Whether to start monitoring automatically on application startup
     /// </summary>
     [JsonPropertyName("autoStartMonitoring")]
-    public bool AutoStartMonitoring { get; init; } = false;
+    public bool AutoStartMonitoring { get; init; }
 
     /// <summary>
     ///     Maximum number of log entries to keep in memory
@@ -41,7 +41,7 @@ public record AppSettings
     ///     Whether to show notifications for warnings
     /// </summary>
     [JsonPropertyName("showWarningNotifications")]
-    public bool ShowWarningNotifications { get; init; } = false;
+    public bool ShowWarningNotifications { get; init; }
 
     /// <summary>
     ///     Export settings
@@ -113,5 +113,5 @@ public record WindowSettings
     ///     Whether the window is maximized
     /// </summary>
     [JsonPropertyName("isMaximized")]
-    public bool IsMaximized { get; init; } = false;
+    public bool IsMaximized { get; init; }
 }

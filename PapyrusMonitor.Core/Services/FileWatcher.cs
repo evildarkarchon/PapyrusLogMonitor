@@ -138,8 +138,8 @@ public class FileWatcher : IFileWatcher
 
         StopWatching();
 
-        _fileChangeSubject?.Dispose();
-        _errorSubject?.Dispose();
+        _fileChangeSubject.Dispose();
+        _errorSubject.Dispose();
 
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -193,7 +193,7 @@ public class FileWatcher : IFileWatcher
 
     private void OnWatcherError(object sender, ErrorEventArgs e)
     {
-        var message = e.GetException()?.Message ?? "Unknown file watcher error";
+        var message = e.GetException().Message;
         _errorSubject.OnNext($"File watcher error: {message}");
 
         // Try to restart the watcher after an error

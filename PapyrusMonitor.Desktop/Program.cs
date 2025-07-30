@@ -18,7 +18,7 @@ internal class Program
     {
         // Create host builder with dependency injection
         var host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices((context, services) =>
+            .ConfigureServices((_, services) =>
             {
                 // Register PapyrusMonitor services
                 services.AddPapyrusMonitorCore();

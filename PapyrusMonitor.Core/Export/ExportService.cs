@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Serialization;
 
 namespace PapyrusMonitor.Core.Export;
@@ -10,19 +10,10 @@ namespace PapyrusMonitor.Core.Export;
 /// <summary>
 ///     Implementation of export service supporting CSV and JSON formats
 /// </summary>
-public class ExportService : IExportService
+public class ExportService(ILogger<ExportService> logger, ISettingsService settingsService)
+    : IExportService
 {
-    private readonly PapyrusMonitorJsonContext _jsonContext;
-    private readonly ILogger<ExportService> _logger;
-    private readonly ISettingsService _settingsService;
-
-    public ExportService(ILogger<ExportService> logger, ISettingsService settingsService)
-    {
-        _logger = logger;
-        _settingsService = settingsService;
-
-        _jsonContext = new PapyrusMonitorJsonContext();
-    }
+    private readonly PapyrusMonitorJsonContext _jsonContext = new();
 
     public async Task ExportAsync(ExportData data, string filePath, ExportFormat format,
         CancellationToken cancellationToken = default)
@@ -41,11 +32,11 @@ public class ExportService : IExportService
             await using var fileStream = File.Create(filePath);
             await ExportAsync(data, fileStream, format, cancellationToken);
 
-            _logger.LogInformation("Successfully exported data to {FilePath} in {Format} format", filePath, format);
+            logger.LogInformation("Successfully exported data to {FilePath} in {Format} format", filePath, format);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to export data to {FilePath}", filePath);
+            logger.LogError(ex, "Failed to export data to {FilePath}", filePath);
             throw;
         }
     }
@@ -82,7 +73,7 @@ public class ExportService : IExportService
     private async Task ExportToCsvAsync(ExportData data, Stream stream, CancellationToken cancellationToken)
     {
         await using var writer = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true);
-        var settings = _settingsService.Settings.ExportSettings;
+        var settings = settingsService.Settings.ExportSettings;
 
         // Write metadata as comments
         await writer.WriteLineAsync($"# Export Date: {data.Metadata.ExportDate:yyyy-MM-dd HH:mm:ss}");
@@ -155,7 +146,7 @@ public class ExportService : IExportService
 
     private async Task ExportToJsonAsync(ExportData data, Stream stream, CancellationToken cancellationToken)
     {
-        var settings = _settingsService.Settings.ExportSettings;
+        var settings = settingsService.Settings.ExportSettings;
 
         if (settings.IncludeTimestamps)
         {

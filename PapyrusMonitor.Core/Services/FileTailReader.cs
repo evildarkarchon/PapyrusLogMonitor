@@ -58,14 +58,7 @@ public class FileTailReader : IFileTailReader
                 var fileInfo = _fileSystem.FileInfo.New(filePath);
                 _lastModifiedTime = fileInfo.LastWriteTime;
 
-                if (startFromEnd)
-                {
-                    CurrentPosition = fileInfo.Length;
-                }
-                else
-                {
-                    CurrentPosition = 0;
-                }
+                CurrentPosition = startFromEnd ? fileInfo.Length : 0;
             }
             else
             {
@@ -119,13 +112,12 @@ public class FileTailReader : IFileTailReader
             var newLines = new List<string>();
 
             // Read the new content
-            using var stream = _fileSystem.File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            await using var stream = _fileSystem.File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             stream.Seek(CurrentPosition, SeekOrigin.Begin);
 
             using var reader = new StreamReader(stream, Encoding.UTF8, true);
 
-            string? line;
-            while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+            while (await reader.ReadLineAsync(cancellationToken) is { } line)
             {
                 newLines.Add(line);
             }

@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Export;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 
 namespace PapyrusMonitor.Core.Services;
@@ -9,23 +9,15 @@ namespace PapyrusMonitor.Core.Services;
 /// <summary>
 ///     Implementation of session history tracking service
 /// </summary>
-public class SessionHistoryService : ISessionHistoryService
+public class SessionHistoryService(ILogger<SessionHistoryService> logger, ISettingsService settingsService)
+    : ISessionHistoryService
 {
-    private readonly ILogger<SessionHistoryService> _logger;
     private readonly object _sessionLock = new();
-    private readonly ISettingsService _settingsService;
-    private readonly ConcurrentBag<PapyrusStats> _statistics;
+    private readonly ConcurrentBag<PapyrusStats> _statistics = new();
     private bool _isSessionActive;
     private DateTime? _sessionEndTime;
 
     private DateTime? _sessionStartTime;
-
-    public SessionHistoryService(ILogger<SessionHistoryService> logger, ISettingsService settingsService)
-    {
-        _logger = logger;
-        _settingsService = settingsService;
-        _statistics = new ConcurrentBag<PapyrusStats>();
-    }
 
     public bool IsSessionActive
     {
@@ -66,7 +58,7 @@ public class SessionHistoryService : ISessionHistoryService
         {
             if (_isSessionActive)
             {
-                _logger.LogWarning("Attempted to start a session while one is already active");
+                logger.LogWarning("Attempted to start a session while one is already active");
                 return;
             }
 
@@ -75,7 +67,7 @@ public class SessionHistoryService : ISessionHistoryService
             _isSessionActive = true;
             _statistics.Clear();
 
-            _logger.LogInformation("Started new monitoring session at {StartTime}", _sessionStartTime);
+            logger.LogInformation("Started new monitoring session at {StartTime}", _sessionStartTime);
         }
     }
 
@@ -85,14 +77,14 @@ public class SessionHistoryService : ISessionHistoryService
         {
             if (!_isSessionActive)
             {
-                _logger.LogWarning("Attempted to end a session while none is active");
+                logger.LogWarning("Attempted to end a session while none is active");
                 return;
             }
 
             _sessionEndTime = DateTime.Now;
             _isSessionActive = false;
 
-            _logger.LogInformation("Ended monitoring session at {EndTime}", _sessionEndTime);
+            logger.LogInformation("Ended monitoring session at {EndTime}", _sessionEndTime);
         }
     }
 
@@ -102,14 +94,14 @@ public class SessionHistoryService : ISessionHistoryService
 
         if (!IsSessionActive)
         {
-            _logger.LogDebug("Stats recorded while no session is active, ignoring");
+            logger.LogDebug("Stats recorded while no session is active, ignoring");
             return;
         }
 
         _statistics.Add(stats);
 
         // Trim history if it exceeds the maximum
-        var maxEntries = _settingsService.Settings.MaxLogEntries;
+        var maxEntries = settingsService.Settings.MaxLogEntries;
         if (_statistics.Count > maxEntries)
         {
             var orderedStats = _statistics.OrderBy(s => s.Timestamp).ToList();
@@ -121,7 +113,7 @@ public class SessionHistoryService : ISessionHistoryService
                 _statistics.Add(stat);
             }
 
-            _logger.LogDebug("Trimmed session history to {MaxEntries} entries", maxEntries);
+            logger.LogDebug("Trimmed session history to {MaxEntries} entries", maxEntries);
         }
     }
 
@@ -175,6 +167,6 @@ public class SessionHistoryService : ISessionHistoryService
     public void ClearHistory()
     {
         _statistics.Clear();
-        _logger.LogInformation("Cleared session history");
+        logger.LogInformation("Cleared session history");
     }
 }

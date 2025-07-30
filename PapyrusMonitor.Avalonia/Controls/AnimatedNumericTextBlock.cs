@@ -37,7 +37,7 @@ public class AnimatedNumericTextBlock : TextBlock
     static AnimatedNumericTextBlock()
     {
         ValueProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.OnValueChanged(e));
-        FormatStringProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, e) => x.UpdateText());
+        FormatStringProperty.Changed.AddClassHandler<AnimatedNumericTextBlock>((x, _) => x.UpdateText());
     }
 
     public AnimatedNumericTextBlock()
@@ -90,49 +90,50 @@ public class AnimatedNumericTextBlock : TextBlock
 
     private async void AnimateValue()
     {
-        var startValue = _currentValue;
-        var endValue = _targetValue;
-        var duration = AnimationDuration;
-
-        if (Math.Abs(startValue - endValue) < 0.01)
+        try
         {
-            _currentValue = endValue;
-            UpdateText();
-            return;
-        }
+            var startValue = _currentValue;
+            var endValue = _targetValue;
+            var duration = AnimationDuration;
 
-        var startTime = DateTime.Now;
-        var easingFunction = new CubicEaseOut();
-
-        while (Math.Abs(_currentValue - endValue) > 0.01)
-        {
-            var elapsed = DateTime.Now - startTime;
-            var progress = Math.Min(1.0, elapsed.TotalMilliseconds / duration.TotalMilliseconds);
-            var easedProgress = easingFunction.Ease(progress);
-
-            _currentValue = startValue + (endValue - startValue) * easedProgress;
-            UpdateText();
-
-            if (progress >= 1.0)
+            if (Math.Abs(startValue - endValue) < 0.01)
             {
                 _currentValue = endValue;
                 UpdateText();
-                break;
+                return;
             }
 
-            await Task.Delay(16); // ~60fps
+            var startTime = DateTime.Now;
+            var easingFunction = new CubicEaseOut();
+
+            while (Math.Abs(_currentValue - endValue) > 0.01)
+            {
+                var elapsed = DateTime.Now - startTime;
+                var progress = Math.Min(1.0, elapsed.TotalMilliseconds / duration.TotalMilliseconds);
+                var easedProgress = easingFunction.Ease(progress);
+
+                _currentValue = startValue + (endValue - startValue) * easedProgress;
+                UpdateText();
+
+                if (progress >= 1.0)
+                {
+                    _currentValue = endValue;
+                    UpdateText();
+                    break;
+                }
+
+                await Task.Delay(16); // ~60fps
+            }
+        }
+        catch (Exception)
+        {
+            // Swallow exceptions to prevent process crash
+            // Animation failure is non-critical
         }
     }
 
     private void UpdateText()
     {
-        if (FormatString.StartsWith("F"))
-        {
-            Text = _currentValue.ToString(FormatString);
-        }
-        else
-        {
-            Text = ((int)Math.Round(_currentValue)).ToString(FormatString);
-        }
+        Text = FormatString.StartsWith("F") ? _currentValue.ToString(FormatString) : ((int)Math.Round(_currentValue)).ToString(FormatString);
     }
 }

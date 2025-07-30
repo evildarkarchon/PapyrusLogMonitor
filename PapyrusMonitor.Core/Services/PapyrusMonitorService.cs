@@ -50,7 +50,17 @@ public class PapyrusMonitorService : IPapyrusMonitorService
         // Subscribe to file watcher events
         _fileWatcher.FileChanged
             .Where(_ => _isMonitoring)
-            .Subscribe(async _ => await ProcessFileChangeAsync(), HandleError);
+            .Subscribe(async void (_) =>
+            {
+                try
+                {
+                    await ProcessFileChangeAsync();
+                }
+                catch (Exception)
+                {
+                    // TODO handle exception
+                }
+            }, HandleError);
 
         _fileWatcher.Errors
             .Subscribe(_errorSubject.OnNext, HandleError);
@@ -285,10 +295,10 @@ public class PapyrusMonitorService : IPapyrusMonitorService
             // Ignore timeout/exceptions during dispose
         }
 
-        _fileWatcher?.Dispose();
-        _tailReader?.Dispose();
-        _statsSubject?.Dispose();
-        _errorSubject?.Dispose();
+        _fileWatcher.Dispose();
+        _tailReader.Dispose();
+        _statsSubject.Dispose();
+        _errorSubject.Dispose();
         _monitoringCancellation?.Dispose();
         _pollingTimer?.Dispose();
 
@@ -378,7 +388,14 @@ public class PapyrusMonitorService : IPapyrusMonitorService
     {
         _pollingTimer = new Timer(async void (_) =>
             {
-                await ProcessFileChangeAsync();
+                try
+                {
+                    await ProcessFileChangeAsync();
+                }
+                catch (Exception)
+                {
+                    // TODO handle exception
+                }
             },
             null, TimeSpan.Zero, TimeSpan.FromMilliseconds(Configuration.UpdateIntervalMs));
     }

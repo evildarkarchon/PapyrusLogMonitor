@@ -2,6 +2,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Serialization;
 
 namespace PapyrusMonitor.Core.Configuration;

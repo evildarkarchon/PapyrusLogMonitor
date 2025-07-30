@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using PapyrusMonitor.Core.Configuration;
 using PapyrusMonitor.Core.Export;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 
 namespace PapyrusMonitor.Core.Tests.Export;

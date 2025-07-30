@@ -5,6 +5,7 @@ using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using PapyrusMonitor.Core.Analytics;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Services;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -191,7 +192,6 @@ public class TrendAnalysisViewModel : ViewModelBase
         }
 
         // Add statistics annotation
-        if (trendData.Summary != null)
         {
             var annotation = new TextAnnotation
             {

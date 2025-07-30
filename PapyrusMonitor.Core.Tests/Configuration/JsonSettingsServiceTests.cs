@@ -73,6 +73,12 @@ public class JsonSettingsServiceTests : IDisposable
     {
         // Arrange
         using var service = new JsonSettingsService(_mockLogger.Object);
+        
+        // Ensure the settings file doesn't exist
+        if (File.Exists(service.SettingsFilePath))
+        {
+            File.Delete(service.SettingsFilePath);
+        }
 
         // Act
         var settings = await service.LoadSettingsAsync();
@@ -184,8 +190,19 @@ public class JsonSettingsServiceTests : IDisposable
             Directory.CreateDirectory(directory);
         }
 
-        // Write invalid JSON
-        await File.WriteAllTextAsync(settingsPath, "{ invalid json }");
+        // Write invalid JSON with retry logic for file access
+        for (int i = 0; i < 3; i++)
+        {
+            try
+            {
+                await File.WriteAllTextAsync(settingsPath, "{ invalid json }");
+                break;
+            }
+            catch (IOException) when (i < 2)
+            {
+                await Task.Delay(100);
+            }
+        }
 
         // Act
         var settings = await service.LoadSettingsAsync();

@@ -1,7 +1,7 @@
 using PapyrusMonitor.Core.Export;
 using PapyrusMonitor.Core.Models;
 
-namespace PapyrusMonitor.Core.Services;
+namespace PapyrusMonitor.Core.Interfaces;
 
 /// <summary>
 ///     Service for tracking monitoring session history

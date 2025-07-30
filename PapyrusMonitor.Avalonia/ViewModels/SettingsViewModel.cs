@@ -40,7 +40,7 @@ public class SettingsViewModel : ViewModelBase
                 this.WhenAnyValue(x => x.DefaultExportPath),
                 this.WhenAnyValue(x => x.IncludeTimestamps),
                 this.WhenAnyValue(x => x.DateFormat),
-                (a, b, c, d, e, f, g, h, i) => true)
+                (_, _, _, _, _, _, _, _, _) => true)
             .Skip(1) // Skip initial values
             .Subscribe(_ => HasChanges = true);
 
@@ -121,6 +121,11 @@ public class SettingsViewModel : ViewModelBase
             await _settingsService.SaveSettingsAsync(settings);
             HasChanges = false;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error saving settings", ex);
+            throw;
+        }
         finally
         {
             IsSaving = false;
@@ -157,11 +162,11 @@ public class SettingsViewModel : ViewModelBase
         {
             Title = "Select Papyrus Log File",
             AllowMultiple = false,
-            FileTypeFilter = new[]
-            {
-                new FilePickerFileType("Log Files") { Patterns = new[] { "*.log", "*.txt" } },
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Log Files") { Patterns = ["Papyrus.0.log"] },
                 FilePickerFileTypes.All
-            }
+            ]
         };
 
         var result = await _storageProvider.OpenFilePickerAsync(options);

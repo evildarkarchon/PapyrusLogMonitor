@@ -1,4 +1,6 @@
-namespace PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Configuration;
+
+namespace PapyrusMonitor.Core.Interfaces;
 
 /// <summary>
 ///     Service for managing application settings

@@ -61,7 +61,7 @@ public class App : Application
                 desktop.MainWindow = mainWindow;
                 break;
             }
-            case ISingleViewApplicationLifetime singleViewPlatform:
+            case ISingleViewApplicationLifetime:
                 throw new NotSupportedException(
                     "Single view platform is not supported. This application requires a desktop environment.");
         }

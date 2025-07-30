@@ -6,26 +6,20 @@ namespace PapyrusMonitor.Core.Analytics;
 /// <summary>
 ///     Implementation of trend analysis service
 /// </summary>
-public class TrendAnalysisService : ITrendAnalysisService
+public class TrendAnalysisService(ILogger<TrendAnalysisService> logger) : ITrendAnalysisService
 {
-    private readonly ILogger<TrendAnalysisService> _logger;
-
-    public TrendAnalysisService(ILogger<TrendAnalysisService> logger)
-    {
-        _logger = logger;
-    }
-
     public async Task<TrendAnalysisResult> AnalyzeTrendsAsync(
         IReadOnlyList<PapyrusStats> statistics,
         int movingAveragePeriod = 5)
     {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (statistics == null || statistics.Count == 0)
         {
-            _logger.LogWarning("No statistics provided for trend analysis");
+            logger.LogWarning("No statistics provided for trend analysis");
             return new TrendAnalysisResult();
         }
 
-        _logger.LogInformation("Analyzing trends for {Count} data points", statistics.Count);
+        logger.LogInformation("Analyzing trends for {Count} data points", statistics.Count);
 
         // Extract data points for each metric
         var dumpsPoints = statistics.Select(s => new TrendDataPoint { Timestamp = s.Timestamp, Value = s.Dumps })

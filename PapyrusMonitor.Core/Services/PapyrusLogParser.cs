@@ -34,7 +34,7 @@ public partial class PapyrusLogParser : ILogParser
     {
         if (string.IsNullOrEmpty(line))
         {
-            return new LogEntry(DateTime.Now, line ?? string.Empty, LogEntryType.Unknown, lineNumber);
+            return new LogEntry(DateTime.Now, line, LogEntryType.Unknown, lineNumber);
         }
 
         var entryType = DetermineLogEntryType(line);
@@ -148,7 +148,7 @@ public partial class PapyrusLogParser : ILogParser
         {
             // Read first few bytes to detect encoding
             var buffer = new byte[4096];
-            using var stream = _fileSystem.File.OpenRead(filePath);
+            await using var stream = _fileSystem.File.OpenRead(filePath);
             var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
 
             if (bytesRead == 0)

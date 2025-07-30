@@ -9,10 +9,7 @@ public class ViewModelBase : ReactiveObject, IActivatableViewModel
     {
         Activator = new ViewModelActivator();
 
-        ViewForMixins.WhenActivated((IActivatableViewModel)this, (CompositeDisposable disposables) =>
-        {
-            HandleActivation(disposables);
-        });
+        this.WhenActivated(HandleActivation);
     }
 
     public ViewModelActivator Activator { get; }

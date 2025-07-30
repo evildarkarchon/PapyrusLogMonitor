@@ -4,6 +4,7 @@ using Microsoft.Reactive.Testing;
 using Moq;
 using PapyrusMonitor.Avalonia.ViewModels;
 using PapyrusMonitor.Core.Analytics;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
 using ReactiveUI;

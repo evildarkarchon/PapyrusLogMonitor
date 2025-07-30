@@ -1,4 +1,6 @@
-namespace PapyrusMonitor.Core.Export;
+using PapyrusMonitor.Core.Export;
+
+namespace PapyrusMonitor.Core.Interfaces;
 
 /// <summary>
 ///     Service for exporting monitoring data

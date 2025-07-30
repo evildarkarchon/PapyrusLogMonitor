@@ -132,13 +132,13 @@ public class MainWindowViewModel : ViewModelBase
                 Title = $"Export Statistics as {format}",
                 SuggestedFileName = defaultFileName,
                 DefaultExtension = extension,
-                FileTypeChoices = new[]
-                {
+                FileTypeChoices =
+                [
                     new FilePickerFileType(format == ExportFormat.Csv ? "CSV Files" : "JSON Files")
                     {
-                        Patterns = new[] { $"*{extension}" }
+                        Patterns = [$"*{extension}"]
                     }
-                }
+                ]
             };
 
             // Use default export path from settings if available
@@ -185,7 +185,7 @@ public class MainWindowViewModel : ViewModelBase
         // Ensure cleanup when deactivated
         Disposable.Create(() =>
         {
-            PapyrusMonitorViewModel?.Dispose();
+            PapyrusMonitorViewModel.Dispose();
         }).DisposeWith(disposables);
     }
 }

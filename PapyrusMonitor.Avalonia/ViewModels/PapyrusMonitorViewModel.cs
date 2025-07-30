@@ -65,7 +65,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
 
         // Last update time
         _lastUpdateTime = this.WhenAnyValue(x => x.Statistics)
-            .Select(stats => stats?.Timestamp ?? DateTime.Now)
+            .Select(stats => stats.Timestamp)
             .ToProperty(this, x => x.LastUpdateTime, DateTime.Now);
 
         // Monitoring button properties
@@ -271,7 +271,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     {
         get
         {
-            var result = _currentButtonText ?? "Start Monitoring";
+            var result = _currentButtonText;
             Debug.WriteLine($"MonitoringButtonText requested: '{result}'");
             return result;
         }
@@ -281,7 +281,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     {
         get
         {
-            var result = _currentButtonIcon ?? "▶️";
+            var result = _currentButtonIcon;
             Debug.WriteLine($"MonitoringButtonIcon requested: '{result}'");
             return result;
         }
@@ -347,7 +347,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     {
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
-        _monitorService?.Dispose();
+        _monitorService.Dispose();
     }
 
     protected override void HandleActivation(CompositeDisposable disposables)
@@ -366,16 +366,24 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         // Subscribe to settings changes
         _settingsService.SettingsChanged
             .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(async settings =>
+            .Subscribe(async void (settings) =>
             {
-                LogFilePath = settings.LogFilePath;
-                var newConfig = new MonitoringConfiguration
+                try
                 {
-                    LogFilePath = settings.LogFilePath,
-                    UpdateIntervalMs = settings.UpdateInterval,
-                    UseFileWatcher = true
-                };
-                await _monitorService.UpdateConfigurationAsync(newConfig);
+                    LogFilePath = settings.LogFilePath;
+                    var newConfig = new MonitoringConfiguration
+                    {
+                        LogFilePath = settings.LogFilePath,
+                        UpdateIntervalMs = settings.UpdateInterval,
+                        UseFileWatcher = true
+                    };
+                    await _monitorService.UpdateConfigurationAsync(newConfig);
+                }
+                catch (Exception)
+                {
+                    // Swallow exceptions
+                    // TODO: Do it properly
+                }
             })
             .DisposeWith(disposables);
 
@@ -453,7 +461,7 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
         {
             LastError = null;
             IsProcessing = true;
-            _cancellationTokenSource?.Cancel();
+            await _cancellationTokenSource?.CancelAsync()!;
 
             // Stop the real monitoring service
             await _monitorService.StopAsync(_cancellationTokenSource?.Token ?? CancellationToken.None);

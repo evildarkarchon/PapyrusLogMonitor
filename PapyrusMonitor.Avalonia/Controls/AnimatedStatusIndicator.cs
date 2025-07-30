@@ -100,7 +100,7 @@ public class AnimatedStatusIndicator : ContentControl
 
         if (EnableAnimations)
         {
-            _textBlock.Transitions = new Transitions { _foregroundTransition };
+            _textBlock.Transitions = [_foregroundTransition];
         }
 
         _textBlock.Foreground = StatusColor;
@@ -108,29 +108,37 @@ public class AnimatedStatusIndicator : ContentControl
 
     private async void OnStatusTextChanged(AvaloniaPropertyChangedEventArgs e)
     {
-        if (_textBlock == null)
+        try
         {
-            return;
-        }
+            if (_textBlock == null)
+            {
+                return;
+            }
 
-        var oldText = (string)e.OldValue!;
-        var newText = (string)e.NewValue!;
+            var oldText = (string)e.OldValue!;
+            var newText = (string)e.NewValue!;
 
-        if (!EnableAnimations || string.IsNullOrEmpty(oldText))
-        {
+            if (!EnableAnimations || string.IsNullOrEmpty(oldText))
+            {
+                _textBlock.Text = newText;
+                return;
+            }
+
+            // Fade out
+            _textBlock.Opacity = 1;
+            await AnimateOpacity(0, TimeSpan.FromMilliseconds(100));
+
+            // Change text
             _textBlock.Text = newText;
-            return;
+
+            // Fade in
+            await AnimateOpacity(1, TimeSpan.FromMilliseconds(100));
         }
-
-        // Fade out
-        _textBlock.Opacity = 1;
-        await AnimateOpacity(0, TimeSpan.FromMilliseconds(100));
-
-        // Change text
-        _textBlock.Text = newText;
-
-        // Fade in
-        await AnimateOpacity(1, TimeSpan.FromMilliseconds(100));
+        catch (Exception)
+        {
+            // Swallow exceptions to prevent process crash
+            // Animation failure is non-critical
+        }
     }
 
     private void OnStatusColorChanged(AvaloniaPropertyChangedEventArgs e)

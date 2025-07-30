@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Models;
 using PapyrusMonitor.Core.Services;
 

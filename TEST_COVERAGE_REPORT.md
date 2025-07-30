@@ -1,6 +1,6 @@
 # Test Coverage Report for PapyrusLogMonitor
 
-Last Updated: 2025-07-29
+Last Updated: 2025-07-30
 
 ## Overview
 
@@ -8,147 +8,173 @@ This report provides a comprehensive overview of test coverage across the Papyru
 
 ## Test Statistics
 
-- **Total Tests**: 178 (as of 2025-07-29)
-  - Core Tests: 128
-  - Avalonia Tests: 50
+- **Total Tests**: 216 (as of 2025-07-30)
+  - Core Tests: 142
+  - Avalonia Tests: 74
 - **Test Frameworks**: xUnit, FluentAssertions, Moq
 - **Mocking**: System.IO.Abstractions for file system operations
 
 ## Coverage by Project
 
-### PapyrusMonitor.Core (121 tests)
+### PapyrusMonitor.Core (142 tests)
 
 #### ✅ Fully Tested Components
 
 1. **Models**
-   - `PapyrusStats` - Comprehensive tests for equality, hash code, and construction
+   - `PapyrusStats` (4 tests) - Comprehensive tests for equality, hash code, and construction
    - `LogEntry` - Basic property and equality tests
 
 2. **Services**
-   - `PapyrusLogParser` - 20 tests covering parsing logic, line processing, and edge cases
-   - `PapyrusMonitorService` - 15 tests for monitoring lifecycle, configuration, and stats emission
-   - `FileWatcher` - 6 tests for file watching lifecycle (limited by MockFileSystem)
-   - `FileTailReader` - 8 tests for file reading and position tracking
+   - `PapyrusLogParser` (12 tests) - Parsing logic, line processing, and edge cases
+   - `PapyrusMonitorService` (8 tests) - Monitoring lifecycle, configuration, and stats emission
+   - `FileWatcher` (6 tests) - File watching lifecycle (limited by MockFileSystem)
+   - `FileTailReader` (10 tests) - File reading and position tracking
+   - `SessionHistoryService` (16 tests) - Session tracking, history management, thread safety
 
 3. **Configuration**
-   - `MonitoringConfiguration` - 4 tests for validation logic
-   - `JsonSettingsService` - 13 tests covering persistence, hot-reload, and error handling ✨ NEW
-   - `AppSettings` - 10 tests for default values and serialization ✨ NEW
+   - `MonitoringConfiguration` (11 tests) - Validation logic
+   - `JsonSettingsService` (13 tests) - Persistence, hot-reload, and error handling
+   - `AppSettings` (10 tests) - Default values and serialization
 
 4. **Export**
-   - `ExportService` - 16 tests for CSV/JSON export functionality ✨ NEW
+   - `ExportService` (16 tests) - CSV/JSON export functionality
    - `ExportData` - Covered through ExportService tests
 
-5. **Services (NEW)**
-   - `SessionHistoryService` - 16 tests for session tracking and history ✨ NEW
-   
-6. **Analytics (NEW)**
-   - `TrendAnalysisService` - 12 tests for trend calculation and analysis ✨ NEW
+5. **Analytics**
+   - `TrendAnalysisService` (12 tests) - Trend calculation, moving averages, linear regression
+
+6. **Integration**
+   - `FileMonitoringIntegrationTests` (7 tests) - End-to-end monitoring scenarios
+
+7. **Extensions**
+   - `ServiceCollectionExtensions` (17 tests) - DI registration and configuration ✨ NEW
 
 #### ❌ Missing Tests
 
-1. **Services**
-   - Service extension methods in `ServiceCollectionExtensions` - NO TESTS
+1. **Models**
+   - `ExportModels` - NO TESTS (if separate from ExportData)
 
-2. **Analytics**
-   - `TrendCalculator` - NO TESTS
-   - `StatisticsAggregator` - NO TESTS
+2. **Serialization**
+   - `PapyrusMonitorJsonContext` - NO TESTS
 
-### PapyrusMonitor.Avalonia (39 tests)
+3. **Interfaces**
+   - Interface definitions don't require tests
+
+### PapyrusMonitor.Avalonia (74 tests)
 
 #### ✅ Fully Tested Components
 
 1. **ViewModels**
-   - `PapyrusMonitorViewModel` - 14 tests (fixed constructor issues) ✨ UPDATED
-   - `MainWindowViewModel` - 13 tests (fixed for new constructor) ✨ UPDATED
-   - `StatisticsViewModel` - 6 tests for property calculations
+   - `PapyrusMonitorViewModel` (14 tests) - Monitoring lifecycle, stats updates
+   - `MainWindowViewModel` (13 tests) - Navigation, export functionality
+   - `StatisticsViewModel` (12 tests) - Property calculations, formatting
+   - `SettingsViewModel` (11 tests) - Settings management, validation
+   - `TrendAnalysisViewModel` (12 tests) - Trend visualization, plot generation, auto-refresh ✨ NEW
+
+2. **Extensions**
+   - `ServiceCollectionExtensions` (12 tests) - ViewModel and service registration ✨ NEW
 
 #### ❌ Missing Tests
 
 1. **ViewModels**
-   - `SettingsViewModel` - CANNOT TEST (ReactiveUI negation operator limitation) ⚠️
-   - `TrendAnalysisViewModel` - NO TESTS
-   - `MainViewModel` - NO TESTS
+   - `MainViewModel` - NO TESTS (placeholder with greeting only)
    - `ViewModelBase` - NO TESTS
 
 2. **Controls**
    - `AnimatedNumericTextBlock` - NO TESTS
    - `AnimatedStatusIndicator` - NO TESTS
 
-3. **Converters**
-   - All value converters - NO TESTS
+3. **Services**
+   - `AvaloniaSchedulerProvider` - NO TESTS
+   - `ConsoleLogger` - NO TESTS
 
-## Test Quality Issues
+4. **Views**
+   - View code-behind files (minimal logic, may not need tests)
 
-### Recently Fixed ✅
-1. **PapyrusMonitorViewModel** - Updated constructor to include ISettingsService and ISessionHistoryService
-2. **ForceUpdateAsync** - Fixed method signature to match interface (includes CancellationToken)
 
-### Still Needs Attention ⚠️
-1. **MainWindowViewModel** - Constructor signature mismatch with new dependencies
-2. **Integration Tests** - No end-to-end monitoring scenarios
-3. **UI Tests** - No Avalonia.Headless tests for UI components
+## Test Quality Analysis
 
-## Priority Recommendations
+### Strengths ✅
 
-### High Priority 🔴 - ✅ ALL COMPLETED
-1. ✅ Fixed `MainWindowViewModel` tests to match new constructor
-2. ✅ Added tests for `SessionHistoryService` - critical for monitoring feature
-3. ✅ Added tests for `TrendAnalysisService` - important for analytics feature
-4. ✅ Refactored `SettingsViewModel` - improved testability and worked around ReactiveUI negation operator limitation
+1. **Comprehensive Core Coverage**: Business logic is well-tested
+2. **Thread Safety**: Concurrent operations tested in SessionHistoryService
+3. **Edge Cases**: Null handling, empty data, invalid inputs covered
+4. **Integration Tests**: End-to-end monitoring scenarios included
+5. **Mathematical Accuracy**: Trend calculations verified to high precision
 
-### Medium Priority 🟡 - ✅ ALL COMPLETED
-1. Add tests for `TrendCalculator` and `StatisticsAggregator`
-2. Add integration tests for file monitoring scenarios
-3. Add tests for value converters
+### Areas for Improvement ⚠️
 
-### Low Priority 🟢
-1. Add tests for `ViewModelBase`
-2. Add tests for animated controls
-3. Add tests for service registration extensions
+1. **UI Component Testing**: No tests for custom controls
+2. **ViewModel Coverage**: Missing tests for trend analysis and main ViewModels
+3. **Service Registration**: Extension methods untested
+4. **Scheduler Testing**: Avalonia scheduler provider needs tests
+
+## Coverage by Feature
+
+### ✅ Well-Covered Features
+
+1. **Core Monitoring**: File watching, parsing, stats tracking
+2. **Session Management**: History tracking, summaries
+3. **Data Export**: CSV/JSON export with formatting
+4. **Settings Management**: Persistence, validation, hot-reload
+5. **Trend Analysis**: Calculations, moving averages, regression
+
+### ⚠️ Partially Covered Features
+
+1. **UI Interactions**: ViewModels tested, but not controls
+2. **Error Handling**: Core error cases covered, UI error handling untested
+
+### ❌ Uncovered Features
+
+1. **Animations**: No tests for animated controls
+
+## Test Distribution by Type
+
+- **Unit Tests**: ~209 (97%)
+  - Model tests: 14
+  - Service tests: 75
+  - ViewModel tests: 62
+  - Configuration tests: 34
+  - Analytics tests: 12
+  - Extension tests: 29
+- **Integration Tests**: 7 (3%)
+- **UI Tests**: 0 (0%)
 
 ## Code Coverage Gaps
 
 ### Critical Paths Without Tests
-1. Session history tracking and persistence
-2. Trend analysis calculations
-3. Settings UI interaction
-4. Analytics aggregation
 
-### Areas with Partial Coverage
-1. Error handling in file operations (some edge cases)
-2. Cancellation token propagation
-3. Observable subscription cleanup
+None! All critical paths now have test coverage.
 
-## Recent Improvements
+### Low-Risk Gaps
 
-### July 29, 2025
+1. **View Code-Behind** - Minimal logic
+2. **Animated Controls** - UI-only behavior
+3. **Logger Implementation** - Simple console wrapper
 
-- ✅ Fixed PapyrusMonitorViewModel constructor issues
-- ✅ Added comprehensive tests for JsonSettingsService (13 tests)
-- ✅ Added tests for AppSettings model (10 tests)
-- ✅ Added comprehensive tests for ExportService (16 tests)
-- ✅ Fixed MainWindowViewModel tests for new constructor (13 tests)
-- ✅ Added comprehensive tests for SessionHistoryService (16 tests)
-- ✅ Added comprehensive tests for TrendAnalysisService (12 tests)
-- ✅ Increased total test count from ~80 to 160+
-- ✅ Refactored SettingsViewModel to improve testability
+## Recommendations
 
-## Next Steps
+### High Priority 🔴
 
-1. **Immediate**: ✅ COMPLETED - Fixed MainWindowViewModel tests
-2. **This Week**: ✅ COMPLETED - Added tests for SessionHistoryService and TrendAnalysisService
-3. **This Sprint**: Continue adding tests for remaining components
-   - Add tests for TrendCalculator and StatisticsAggregator
-   - Add tests for MainViewModel and TrendAnalysisViewModel
-   - Add tests for value converters
-4. **Future**: 
-   - Implement UI testing with Avalonia.Headless
-   - Consider refactoring SettingsViewModel to avoid ReactiveUI limitations
+1. ✅ COMPLETED - Add tests for `TrendAnalysisViewModel` (12 tests added)
+2. ✅ COMPLETED - Add tests for service registration extensions (29 tests added)
+
+### Medium Priority 🟡
+
+1. Add UI tests using Avalonia.Headless
+2. Test animated controls for basic functionality
+3. Add tests for scheduler provider
+
+### Low Priority 🟢
+
+1. Test serialization context
+2. Add tests for console logger
+3. Consider property-based testing for models
 
 ## Testing Standards
 
 ### Established Patterns
+
 - Use `FluentAssertions` for all assertions
 - Use `Moq` for mocking dependencies
 - Use `System.IO.Abstractions` for file system mocking
@@ -158,6 +184,61 @@ This report provides a comprehensive overview of test coverage across the Papyru
 - Include edge cases and null handling
 
 ### Naming Conventions
+
 - Test classes: `[ClassName]Tests`
 - Test methods: `[MethodName]_[Scenario]_[ExpectedResult]`
 - Test projects: `[ProjectName].Tests`
+
+## Test Execution
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific project
+dotnet test PapyrusMonitor.Core.Tests
+
+# Run with detailed output
+dotnet test --logger "console;verbosity=detailed"
+```
+
+## Next Steps
+
+1. **Immediate**: ✅ COMPLETED - Added tests for TrendAnalysisViewModel
+2. **This Week**: ✅ COMPLETED - Added service registration tests
+3. **This Sprint**: Set up Avalonia.Headless for UI testing
+4. **Future**: Consider mutation testing for quality assessment
+
+## Recent Updates (July 30, 2025)
+
+- ✅ Added comprehensive tests for TrendAnalysisViewModel (12 tests)
+  - Plot model generation
+  - Command execution and state management
+  - Auto-refresh on moving average period changes
+  - Error handling
+  - Throttling behavior
+
+- ✅ Added comprehensive tests for service registration extensions (29 tests)
+  - Core ServiceCollectionExtensions (17 tests)
+    - Service registration verification
+    - Singleton lifetime validation
+    - Configuration handling
+    - Integration testing
+  - Avalonia ServiceCollectionExtensions (12 tests)
+    - ViewModel registration
+    - Service lifetime validation
+    - Full integration scenarios
+
+## Notes
+
+- Session persistence is not implemented (only in-memory tracking)
+- All trend calculations are thoroughly tested
+- ViewModels use ReactiveUI which can complicate testing
+- File system operations are well-mocked using abstractions
+- MainViewModel is a placeholder (not the entry point - MainWindowViewModel is)
+- MainWindowViewModel is fully tested as the actual application entry point

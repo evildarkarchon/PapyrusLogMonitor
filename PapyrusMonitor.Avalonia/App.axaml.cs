@@ -30,10 +30,23 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = ServiceProvider.GetRequiredService<MainWindowViewModel>()
-            };
+            var mainWindow = new MainWindow();
+            
+            // Create MainWindowViewModel with storage provider
+            var papyrusMonitorViewModel = ServiceProvider.GetRequiredService<PapyrusMonitorViewModel>();
+            var settingsService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Configuration.ISettingsService>();
+            var exportService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Export.IExportService>();
+            var sessionHistoryService = ServiceProvider.GetRequiredService<PapyrusMonitor.Core.Services.ISessionHistoryService>();
+            
+            var mainWindowViewModel = new MainWindowViewModel(
+                papyrusMonitorViewModel,
+                settingsService,
+                exportService,
+                sessionHistoryService,
+                mainWindow.StorageProvider);
+            
+            mainWindow.DataContext = mainWindowViewModel;
+            desktop.MainWindow = mainWindow;
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {

@@ -1,0 +1,185 @@
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using PapyrusMonitor.Core.Configuration;
+
+namespace PapyrusMonitor.Core.Export;
+
+/// <summary>
+/// Implementation of export service supporting CSV and JSON formats
+/// </summary>
+public class ExportService : IExportService
+{
+    private readonly ILogger<ExportService> _logger;
+    private readonly ISettingsService _settingsService;
+    private readonly JsonSerializerOptions _jsonOptions;
+
+    public ExportService(ILogger<ExportService> logger, ISettingsService settingsService)
+    {
+        _logger = logger;
+        _settingsService = settingsService;
+        
+        _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+    }
+
+    public async Task ExportAsync(ExportData data, string filePath, ExportFormat format, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
+
+        try
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await using var fileStream = File.Create(filePath);
+            await ExportAsync(data, fileStream, format, cancellationToken);
+            
+            _logger.LogInformation("Successfully exported data to {FilePath} in {Format} format", filePath, format);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export data to {FilePath}", filePath);
+            throw;
+        }
+    }
+
+    public async Task ExportAsync(ExportData data, Stream stream, ExportFormat format, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(stream);
+
+        switch (format)
+        {
+            case ExportFormat.Csv:
+                await ExportToCsvAsync(data, stream, cancellationToken);
+                break;
+            case ExportFormat.Json:
+                await ExportToJsonAsync(data, stream, cancellationToken);
+                break;
+            default:
+                throw new NotSupportedException($"Export format {format} is not supported");
+        }
+    }
+
+    public string GetFileExtension(ExportFormat format)
+    {
+        return format switch
+        {
+            ExportFormat.Csv => ".csv",
+            ExportFormat.Json => ".json",
+            _ => throw new NotSupportedException($"Export format {format} is not supported")
+        };
+    }
+
+    private async Task ExportToCsvAsync(ExportData data, Stream stream, CancellationToken cancellationToken)
+    {
+        await using var writer = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true);
+        var settings = _settingsService.Settings.ExportSettings;
+        
+        // Write metadata as comments
+        await writer.WriteLineAsync($"# Export Date: {data.Metadata.ExportDate:yyyy-MM-dd HH:mm:ss}");
+        await writer.WriteLineAsync($"# Application Version: {data.Metadata.ApplicationVersion}");
+        await writer.WriteLineAsync($"# Log File: {data.Metadata.LogFilePath}");
+        
+        if (data.Metadata.SessionStartTime.HasValue && data.Metadata.SessionEndTime.HasValue)
+        {
+            await writer.WriteLineAsync($"# Session Start: {data.Metadata.SessionStartTime.Value:yyyy-MM-dd HH:mm:ss}");
+            await writer.WriteLineAsync($"# Session End: {data.Metadata.SessionEndTime.Value:yyyy-MM-dd HH:mm:ss}");
+        }
+        
+        await writer.WriteLineAsync();
+        
+        // Write headers
+        var headers = new List<string> { "Dumps", "Stacks", "Warnings", "Errors", "Ratio" };
+        if (settings.IncludeTimestamps)
+        {
+            headers.Insert(0, "Timestamp");
+        }
+        await writer.WriteLineAsync(string.Join(",", headers));
+        
+        // Write data
+        foreach (var stats in data.Statistics)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            var values = new List<string>
+            {
+                stats.Dumps.ToString(),
+                stats.Stacks.ToString(),
+                stats.Warnings.ToString(),
+                stats.Errors.ToString(),
+                stats.Ratio.ToString("F2", CultureInfo.InvariantCulture)
+            };
+            
+            if (settings.IncludeTimestamps)
+            {
+                values.Insert(0, stats.Timestamp.ToString(settings.DateFormat));
+            }
+            
+            await writer.WriteLineAsync(string.Join(",", values));
+        }
+        
+        // Write summary if available
+        if (data.Summary != null)
+        {
+            await writer.WriteLineAsync();
+            await writer.WriteLineAsync("# Summary Statistics");
+            await writer.WriteLineAsync($"# Total Dumps: {data.Summary.TotalDumps}");
+            await writer.WriteLineAsync($"# Total Stacks: {data.Summary.TotalStacks}");
+            await writer.WriteLineAsync($"# Total Warnings: {data.Summary.TotalWarnings}");
+            await writer.WriteLineAsync($"# Total Errors: {data.Summary.TotalErrors}");
+            await writer.WriteLineAsync($"# Average Ratio: {data.Summary.AverageRatio:F2}");
+            await writer.WriteLineAsync($"# Peak Dumps: {data.Summary.PeakDumps}");
+            await writer.WriteLineAsync($"# Peak Stacks: {data.Summary.PeakStacks}");
+            await writer.WriteLineAsync($"# Duration: {data.Summary.Duration:hh\\:mm\\:ss}");
+        }
+        
+        await writer.FlushAsync();
+    }
+
+    private async Task ExportToJsonAsync(ExportData data, Stream stream, CancellationToken cancellationToken)
+    {
+        var settings = _settingsService.Settings.ExportSettings;
+        
+        // Create export object based on settings
+        object exportObject;
+        if (settings.IncludeTimestamps)
+        {
+            exportObject = data;
+        }
+        else
+        {
+            // Create a modified version without timestamps
+            var statsWithoutTimestamps = data.Statistics.Select(s => new
+            {
+                s.Dumps,
+                s.Stacks,
+                s.Warnings,
+                s.Errors,
+                s.Ratio
+            }).ToList();
+            
+            exportObject = new
+            {
+                data.Metadata,
+                Statistics = statsWithoutTimestamps,
+                data.Summary
+            };
+        }
+        
+        await JsonSerializer.SerializeAsync(stream, exportObject, _jsonOptions, cancellationToken);
+        await stream.FlushAsync(cancellationToken);
+    }
+}

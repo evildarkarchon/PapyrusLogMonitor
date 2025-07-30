@@ -67,13 +67,13 @@ Read-only Reference code available in `Code to Port/`
   - [x] Smooth animations for value changes
 
 ## Phase 6: Advanced Features
-- [ ] Implement configuration system:
-  - [ ] Settings view for log path configuration
-  - [ ] JSON-based settings persistence
-  - [ ] Hot-reload of configuration changes
-- [ ] Create data export functionality:
-  - [ ] Export statistics to CSV/JSON
-  - [ ] Session history tracking
+- [x] Implement configuration system:
+  - [x] Settings view for log path configuration
+  - [x] JSON-based settings persistence
+  - [x] Hot-reload of configuration changes
+- [x] Create data export functionality:
+  - [x] Export statistics to CSV/JSON
+  - [x] Session history tracking
   - [ ] Trend analysis graphs
 
 ## Phase 7: Testing & Performance

@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using PapyrusMonitor.Core.Configuration;
+using PapyrusMonitor.Core.Export;
 using PapyrusMonitor.Core.Interfaces;
 using PapyrusMonitor.Core.Services;
 
@@ -29,6 +30,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFileWatcher, FileWatcher>();
         services.AddSingleton<IFileTailReader, FileTailReader>();
         services.AddSingleton<IPapyrusMonitorService, PapyrusMonitorService>();
+        
+        // Register new services for Phase 6
+        services.AddSingleton<ISettingsService, JsonSettingsService>();
+        services.AddSingleton<IExportService, ExportService>();
+        services.AddSingleton<ISessionHistoryService, SessionHistoryService>();
         
         // Register configuration
         var config = configuration ?? CreateDefaultConfiguration();

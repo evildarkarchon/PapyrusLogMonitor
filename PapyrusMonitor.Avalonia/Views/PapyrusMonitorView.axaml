@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:PapyrusMonitor.Avalonia.ViewModels"
              xmlns:controls="clr-namespace:PapyrusMonitor.Avalonia.Controls"
+             xmlns:export="clr-namespace:PapyrusMonitor.Core.Export;assembly=PapyrusMonitor.Core"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="PapyrusMonitor.Avalonia.Views.PapyrusMonitorView"
              x:DataType="vm:PapyrusMonitorViewModel">
@@ -146,29 +147,63 @@
         <Grid Grid.Row="3" />
 
         <!-- Control Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
-            <!-- Start/Stop Button -->
-            <Button Command="{Binding ToggleMonitoringCommand}"
-                    IsEnabled="{Binding !IsProcessing}"
-                    Width="175"
-                    Height="40">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="{Binding MonitoringButtonIcon, FallbackValue='▶️'}" FontSize="16" Foreground="White" />
-                    <TextBlock Text="{Binding MonitoringButtonText, FallbackValue='Start Monitoring'}" VerticalAlignment="Center" Foreground="White" />
-                </StackPanel>
-            </Button>
+        <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="15">
+            <!-- Main Control Buttons -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
+                <!-- Start/Stop Button -->
+                <Button Command="{Binding ToggleMonitoringCommand}"
+                        IsEnabled="{Binding !IsProcessing}"
+                        Width="175"
+                        Height="40">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding MonitoringButtonIcon, FallbackValue='▶️'}" FontSize="16" Foreground="White" />
+                        <TextBlock Text="{Binding MonitoringButtonText, FallbackValue='Start Monitoring'}" VerticalAlignment="Center" Foreground="White" />
+                    </StackPanel>
+                </Button>
 
-            <!-- Settings Button (placeholder for future) -->
-            <Button Width="125"
-                    Height="40"
-                    IsEnabled="False"
-                    ToolTip.Tip="Settings (Coming Soon)">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="⚙️" FontSize="16" />
-                    <TextBlock Text="Settings" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
-        </StackPanel>
+                <!-- Settings Button -->
+                <Button Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Width="125"
+                        Height="40">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="⚙️" FontSize="16" />
+                        <TextBlock Text="Settings" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            
+            <!-- Export Buttons -->
+            <StackPanel Grid.Row="1" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center" 
+                        Spacing="15"
+                        IsVisible="{Binding IsMonitoring}">
+                <TextBlock Text="Export:" 
+                           VerticalAlignment="Center" 
+                           FontWeight="Medium"
+                           Margin="0,0,10,0"/>
+                
+                <Button Command="{Binding DataContext.ExportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        CommandParameter="{x:Static export:ExportFormat.Csv}"
+                        IsEnabled="{Binding !DataContext.IsExporting, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Height="35">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="📊" FontSize="14" />
+                        <TextBlock Text="Export CSV" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                
+                <Button Command="{Binding DataContext.ExportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        CommandParameter="{x:Static export:ExportFormat.Json}"
+                        IsEnabled="{Binding !DataContext.IsExporting, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Height="35">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="📋" FontSize="14" />
+                        <TextBlock Text="Export JSON" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- Progress Indicator -->
         <ProgressBar Grid.Row="5"

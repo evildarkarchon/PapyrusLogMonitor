@@ -16,6 +16,8 @@ namespace PapyrusMonitor.Avalonia.ViewModels;
 public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
 {
     private readonly IPapyrusMonitorService _monitorService;
+    private readonly ISettingsService _settingsService;
+    private readonly ISessionHistoryService _sessionHistoryService;
     private readonly ObservableAsPropertyHelper<bool> _isMonitoring;
     private readonly ObservableAsPropertyHelper<string> _statusText;
     private readonly ObservableAsPropertyHelper<DateTime> _lastUpdateTime;
@@ -119,12 +121,14 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
     public ReactiveCommand<Unit, Unit> ForceUpdateCommand { get; }
     public ReactiveCommand<string, Unit> UpdateLogPathCommand { get; }
 
-    public PapyrusMonitorViewModel(IPapyrusMonitorService monitorService, MonitoringConfiguration configuration)
+    public PapyrusMonitorViewModel(IPapyrusMonitorService monitorService, ISettingsService settingsService, ISessionHistoryService sessionHistoryService)
     {
         _monitorService = monitorService ?? throw new ArgumentNullException(nameof(monitorService));
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _sessionHistoryService = sessionHistoryService ?? throw new ArgumentNullException(nameof(sessionHistoryService));
         
-        // Set initial log path from configuration
-        LogFilePath = configuration?.LogFilePath;
+        // Set initial log path from settings
+        LogFilePath = _settingsService.Settings.LogFilePath;
 
         // Create observable for monitoring state
         var isMonitoringObservable = this.WhenAnyValue(x => x.IsMonitoringInternal)
@@ -280,6 +284,24 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             .Subscribe(stats =>
             {
                 Statistics = stats;
+                // Record stats in session history
+                _sessionHistoryService.RecordStats(stats);
+            })
+            .DisposeWith(disposables);
+        
+        // Subscribe to settings changes
+        _settingsService.SettingsChanged
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(async settings =>
+            {
+                LogFilePath = settings.LogFilePath;
+                var newConfig = new MonitoringConfiguration
+                {
+                    LogFilePath = settings.LogFilePath,
+                    UpdateIntervalMs = settings.UpdateInterval,
+                    UseFileWatcher = true
+                };
+                await _monitorService.UpdateConfigurationAsync(newConfig);
             })
             .DisposeWith(disposables);
 
@@ -314,8 +336,26 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             this.RaisePropertyChanged(nameof(MonitoringButtonIcon));
             _cancellationTokenSource = new CancellationTokenSource();
             
+            // Start session history tracking
+            _sessionHistoryService.StartSession();
+            
+            // Update monitoring configuration from settings
+            var config = new MonitoringConfiguration
+            {
+                LogFilePath = _settingsService.Settings.LogFilePath,
+                UpdateIntervalMs = _settingsService.Settings.UpdateInterval,
+                UseFileWatcher = true
+            };
+            await _monitorService.UpdateConfigurationAsync(config);
+            
             // Start the real monitoring service
             await _monitorService.StartAsync(_cancellationTokenSource.Token);
+            
+            // Auto-start if configured
+            if (_settingsService.Settings.AutoStartMonitoring && !string.IsNullOrEmpty(_settingsService.Settings.LogFilePath))
+            {
+                // Already starting, so this is covered
+            }
         }
         catch (OperationCanceledException)
         {
@@ -342,6 +382,9 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             
             // Stop the real monitoring service
             await _monitorService.StopAsync(_cancellationTokenSource?.Token ?? CancellationToken.None);
+            
+            // End session history tracking
+            _sessionHistoryService.EndSession();
             
             IsMonitoringInternal = false;
             _currentButtonText = "Start Monitoring";
@@ -396,14 +439,11 @@ public class PapyrusMonitorViewModel : ViewModelBase, IDisposable
             LastError = null;
             LogFilePath = path;
             
-            // Update the service configuration with new path
-            var newConfig = new MonitoringConfiguration
-            {
-                LogFilePath = path,
-                UpdateIntervalMs = _monitorService.Configuration.UpdateIntervalMs,
-                UseFileWatcher = _monitorService.Configuration.UseFileWatcher
-            };
-            await _monitorService.UpdateConfigurationAsync(newConfig);
+            // Update settings with new path
+            var updatedSettings = _settingsService.Settings with { LogFilePath = path };
+            await _settingsService.SaveSettingsAsync(updatedSettings);
+            
+            // The configuration will be updated via settings change subscription
         }
         catch (Exception ex)
         {

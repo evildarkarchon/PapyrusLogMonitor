@@ -99,9 +99,8 @@ This report provides a comprehensive overview of test coverage across the Papyru
 
 ### Medium Priority 🟡
 1. Add tests for `TrendCalculator` and `StatisticsAggregator`
-2. Add tests for `MainViewModel`
-3. Add integration tests for file monitoring scenarios
-4. Add tests for value converters
+2. Add integration tests for file monitoring scenarios
+3. Add tests for value converters
 
 ### Low Priority 🟢
 1. Add tests for `ViewModelBase`

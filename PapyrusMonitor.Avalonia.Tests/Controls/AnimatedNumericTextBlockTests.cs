@@ -1,11 +1,13 @@
+using Avalonia.Headless.XUnit;
 using FluentAssertions;
 using PapyrusMonitor.Avalonia.Controls;
 
 namespace PapyrusMonitor.Avalonia.Tests.Controls;
 
+[Collection("AvaloniaUITests")]
 public class AnimatedNumericTextBlockTests
 {
-    [Fact]
+    [AvaloniaFact]
     public void Constructor_Should_Initialize_Default_Properties()
     {
         // Arrange & Act
@@ -18,7 +20,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.EnableAnimations.Should().BeTrue();
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Value_Property_Should_Update_Text_Without_Animation_When_Disabled()
     {
         // Arrange
@@ -31,7 +33,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("42.5");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Value_Property_Should_Update_Text_Without_Animation_When_Not_Visible()
     {
         // Arrange
@@ -44,7 +46,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("100");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void FormatString_Property_Should_Update_Text_Display()
     {
         // Arrange
@@ -61,7 +63,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("1234.5679");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void FormatString_Should_Handle_Integer_Format()
     {
         // Arrange
@@ -75,7 +77,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("1235");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void AnimationDuration_Property_Should_Update_Value()
     {
         // Arrange
@@ -89,7 +91,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.AnimationDuration.Should().Be(newDuration);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void EnableAnimations_Property_Should_Update_Value()
     {
         // Arrange
@@ -101,7 +103,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.EnableAnimations.Should().BeFalse();
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Not_Animate_When_Value_Change_Is_Small()
     {
         // Arrange
@@ -123,7 +125,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("10.01"); // Should round to 2 decimal places
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Handle_Zero_Value()
     {
         // Arrange
@@ -134,7 +136,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("0.0");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Handle_Negative_Values()
     {
         // Arrange
@@ -145,7 +147,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("-123.45");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Handle_Large_Values()
     {
         // Arrange
@@ -156,7 +158,7 @@ public class AnimatedNumericTextBlockTests
         textBlock.Text.Should().Be("1000000");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Handle_Format_Change_While_Value_Remains_Same()
     {
         // Arrange

@@ -88,7 +88,7 @@ Read-only Reference code available in `Code to Port/`
 - [ ] UI tests:
   - [ ] ViewModel behavior verification
   - [ ] Command execution tests
-  - [ ] Binding validation
+  - [x] Binding validation
 
 ## Phase 8: Deployment & Distribution
 - [ ] Configure build pipeline:

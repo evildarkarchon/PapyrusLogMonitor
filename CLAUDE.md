@@ -139,3 +139,7 @@ dotnet clean
 - Tests for PapyrusMonitor.Core must go in PapyrusMonitor.Core.Tests
 - Tests for PapyrusMonitor.Avalonia must go in PapyrusMonitor.Avalonia.Tests
 - Strict separation is important because the PapyrusMonitor.Core project, and its tests, will be utilized elsewhere
+
+## Developer Warnings
+
+- Never run `dotnet test` or `dotnet run` with `--no-build`

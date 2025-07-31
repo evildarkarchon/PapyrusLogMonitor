@@ -1,13 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Headless.XUnit;
 using FluentAssertions;
 using PapyrusMonitor.Avalonia.Controls;
 
 namespace PapyrusMonitor.Avalonia.Tests.Controls;
 
+[Collection("AvaloniaUITests")]
 public class AnimatedStatusIndicatorTests
 {
-    [Fact]
+    [AvaloniaFact]
     public void Constructor_Should_Initialize_Default_Properties()
     {
         // Arrange & Act
@@ -23,7 +25,7 @@ public class AnimatedStatusIndicatorTests
         indicator.FontSize.Should().Be(16);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void StatusText_Property_Should_Update_Value()
     {
         // Arrange
@@ -36,7 +38,7 @@ public class AnimatedStatusIndicatorTests
         indicator.StatusText.Should().Be("❌");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void StatusColor_Property_Should_Update_Value()
     {
         // Arrange
@@ -50,7 +52,7 @@ public class AnimatedStatusIndicatorTests
         indicator.StatusColor.Should().BeSameAs(newBrush);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void AnimationDuration_Property_Should_Update_Value()
     {
         // Arrange
@@ -64,7 +66,7 @@ public class AnimatedStatusIndicatorTests
         indicator.AnimationDuration.Should().Be(newDuration);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void EnableAnimations_Property_Should_Update_Value()
     {
         // Arrange
@@ -77,7 +79,7 @@ public class AnimatedStatusIndicatorTests
         indicator.EnableAnimations.Should().BeFalse();
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Create_TextBlock_Content_On_Template_Apply()
     {
         // Arrange
@@ -94,10 +96,10 @@ public class AnimatedStatusIndicatorTests
         indicator.Content.Should().BeOfType<TextBlock>();
         var textBlock = (TextBlock?)indicator.Content;
         textBlock?.Text.Should().Be("⚠️");
-        textBlock.Foreground.Should().Be(Brushes.Orange);
+        textBlock?.Foreground.Should().Be(Brushes.Orange);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Update_TextBlock_When_StatusText_Changes_Without_Animation()
     {
         // Arrange
@@ -115,7 +117,7 @@ public class AnimatedStatusIndicatorTests
         textBlock?.Text.Should().Be("New Status");
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Update_TextBlock_When_StatusColor_Changes_Without_Animation()
     {
         // Arrange
@@ -133,7 +135,7 @@ public class AnimatedStatusIndicatorTests
         textBlock?.Foreground.Should().Be(Brushes.Blue);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Handle_Null_TextBlock_Gracefully()
     {
         // Arrange
@@ -145,7 +147,7 @@ public class AnimatedStatusIndicatorTests
         indicator.StatusColor = Brushes.Red;
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Apply_Transitions_When_Animations_Enabled()
     {
         // Arrange
@@ -163,7 +165,7 @@ public class AnimatedStatusIndicatorTests
         textBlock?.Transitions.Should().HaveCount(1);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Should_Not_Apply_Transitions_When_Animations_Disabled()
     {
         // Arrange

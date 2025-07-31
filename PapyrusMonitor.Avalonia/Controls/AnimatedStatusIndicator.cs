@@ -58,6 +58,9 @@ public class AnimatedStatusIndicator : ContentControl
         FontSize = 16;
         HorizontalAlignment = HorizontalAlignment.Center;
         VerticalAlignment = VerticalAlignment.Center;
+        
+        // Initialize content immediately
+        InitializeContent();
     }
 
     public string StatusText
@@ -87,23 +90,34 @@ public class AnimatedStatusIndicator : ContentControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
-
+        InitializeContent();
+    }
+    
+    /// <summary>
+    /// Public method for tests to initialize the control
+    /// </summary>
+    public new void ApplyTemplate()
+    {
+        InitializeContent();
+    }
+    
+    private void InitializeContent()
+    {
         _textBlock = new TextBlock
         {
             Text = StatusText,
             FontSize = FontSize,
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = StatusColor
         };
-
-        Content = _textBlock;
 
         if (EnableAnimations)
         {
             _textBlock.Transitions = [_foregroundTransition];
         }
 
-        _textBlock.Foreground = StatusColor;
+        Content = _textBlock;
     }
 
     private async void OnStatusTextChanged(AvaloniaPropertyChangedEventArgs e)

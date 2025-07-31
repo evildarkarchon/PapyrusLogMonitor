@@ -46,6 +46,11 @@ public class AnimatedNumericTextBlock : TextBlock
         {
             Duration = AnimationDuration, Easing = new CubicEaseOut(), FillMode = FillMode.Forward
         };
+        
+        // Initialize text with default value
+        _currentValue = 0;
+        _targetValue = 0;
+        UpdateText();
     }
 
     public double Value
@@ -134,6 +139,19 @@ public class AnimatedNumericTextBlock : TextBlock
 
     private void UpdateText()
     {
-        Text = FormatString.StartsWith("F") ? _currentValue.ToString(FormatString) : ((int)Math.Round(_currentValue)).ToString(FormatString);
+        if (FormatString.StartsWith("F"))
+        {
+            Text = _currentValue.ToString(FormatString);
+        }
+        else if (FormatString.StartsWith("D"))
+        {
+            // D format is for integers only, so round first
+            Text = ((int)Math.Round(_currentValue)).ToString();
+        }
+        else
+        {
+            // For other formats, use the format string directly
+            Text = _currentValue.ToString(FormatString);
+        }
     }
 }
